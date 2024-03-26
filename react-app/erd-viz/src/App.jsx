@@ -1,5 +1,6 @@
 import './App.css'
 import Panel from '../components/Panel'
+import Diagram from "../components/Diagram.jsx";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCode} from "@fortawesome/free-solid-svg-icons";
 
@@ -17,7 +18,7 @@ function App() {
 
   return <div className='container'>
     <Panel />
-    <Canvas />
+    <Diagram />
     <CodeButton />
   </div>
 }
