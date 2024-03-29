@@ -3,6 +3,7 @@ import Panel from '../components/Panel'
 import Diagram from "../components/Diagram.jsx";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCode} from "@fortawesome/free-solid-svg-icons";
+import Editor from "../components/Editor/Editor.jsx";
 
 function Canvas() {
   return <div className='canvas'>Canvas</div>
@@ -17,9 +18,11 @@ function CodeButton() {
 function App() {
 
   return <div className='container'>
-    <Panel />
     <Diagram />
     <CodeButton />
+    <div style={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center"}}>
+      <Editor />
+    </div>
   </div>
 }
 
