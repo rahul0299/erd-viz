@@ -1,13 +1,13 @@
 import * as go from 'gojs';
-import { ReactDiagram } from "gojs-react";
+import { ReactPalette } from "gojs-react";
 
-import './Diagram.css';
+import './Palette.css';
 
-function initDiagram() {
+function initPalette() {
     const $= go.GraphObject.make;
-    // set your license key here before creating the diagram: go.Diagram.licenseKey = "...";
-    const diagram =
-        $(go.Diagram,
+    // set your license key here before creating the Palette: go.Palette.licenseKey = "...";
+    const palette =
+        $(go.Palette,
             {
                 'undoManager.isEnabled': true,
                 model: new go.GraphLinksModel(
@@ -62,12 +62,12 @@ function initDiagram() {
             }, new go.Binding('text').makeTwoWay())
         );
 
-    diagram.nodeTemplateMap = new go.Map();
-    diagram.nodeTemplateMap.add("entity", entityNode);
-    diagram.nodeTemplateMap.add("relation", relationNode);
-    diagram.nodeTemplateMap.add("attribute", attributeNode);
+    palette.nodeTemplateMap = new go.Map();
+    palette.nodeTemplateMap.add("entity", entityNode);
+    palette.nodeTemplateMap.add("relation", relationNode);
+    palette.nodeTemplateMap.add("attribute", attributeNode);
 
-    return diagram;
+    return palette;
 }
 
 /**
@@ -78,10 +78,10 @@ function handleModelChange(changes) {
     // alert('GoJS model changed!');
 }
 
-const Diagram = () => {
-    return <ReactDiagram
-        initDiagram={initDiagram}
-        divClassName='diagram-component'
+const Palette = () => {
+    return <ReactPalette
+        initPalette={initPalette}
+        divClassName='palette-component'
         nodeDataArray={[
             { key: 0, text: 'Entity', color: 'white', loc: '0 0', category: "entity" },
             { key: 1, text: 'Relation', color: 'white', loc: '200 0', category: "relation" },
@@ -89,15 +89,7 @@ const Diagram = () => {
             { key: 3, text: 'Primary Key', color: 'lightgreen',  loc: '75 100', category: "attribute" },
             // { key: 3, text: 'Delta', color: 'pink', loc: '150 150' }
         ]}
-        linkDataArray={[
-            { key: -1, from: 0, to: 1 },
-            // { key: -2, from: 0, to: 2 },
-            // { key: -3, from: 1, to: 1 },
-            // { key: -4, from: 2, to: 3 },
-            // { key: -5, from: 3, to: 0 }
-        ]}
-        onModelChange={handleModelChange}
     />
 }
 
-export default Diagram;
+export default Palette;

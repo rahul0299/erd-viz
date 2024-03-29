@@ -15,28 +15,30 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faN, faU} from "@fortawesome/free-solid-svg-icons";
 
 const Editor = (props) => {
-    const [state, setState] = useState({
-        name: "entity",
-        category: "entity",
-        attributes: [
-            { name: "attr1", type: "varchar", isUnique: false, isNullable: true },
-            { name: "attr2", type: "number", isUnique: true, isNullable: false },
-            { name: "attr3", type: "date", isUnique: false, isNullable: true },
-            { name: "attr4", type: "boolean", isUnique: false, isNullable: true },
-        ],
-        primaryKey: "attr2"
-    });
+    // const [state, setState] = useState({
+    //     name: "entity",
+    //     category: "entity",
+    //     attributes: [
+    //         { name: "attr1", type: "varchar", isUnique: false, isNullable: true },
+    //         { name: "attr2", type: "number", isUnique: true, isNullable: false },
+    //         { name: "attr3", type: "date", isUnique: false, isNullable: true },
+    //         { name: "attr4", type: "boolean", isUnique: false, isNullable: true },
+    //     ],
+    //     primaryKey: "attr2"
+    // });
+
+    const [state, setState] = useState(props.data)
 
     const inActiveColor = "#ddd";
     const nullableColor = "green";
     const uniqueColor = "red";
 
-    return <Card>
+    return <Card variant="outlined" sx={{ width: 420 }}>
         <CardHeader title="Editor" />
         <CardContent>
             <TextField value={state.name} fullWidth={true}></TextField>
             <Divider sx={{ marginTop: 2 }}/>
-            <List dense={true} sx={{ minWidth: 400 }}>
+            <List dense={true}>
                 {
                     state.attributes.map(({ name, type, isUnique, isNullable }) => {
                         return <ListItem secondaryAction={
