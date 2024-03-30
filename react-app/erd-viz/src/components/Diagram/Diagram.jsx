@@ -72,6 +72,8 @@ const Diagram = (props) => {
         diagram.nodeTemplateMap.add("relation", relationNode);
         diagram.nodeTemplateMap.add("attribute", attributeNode);
 
+        diagram.linkTemplate = $(go.Link, $(go.Shape, { strokeWidth: 2}));
+
         diagram.addDiagramListener('ChangedSelection', props.onDiagramEvent);
 
         return diagram;

@@ -103,20 +103,28 @@ const Editor = (props) => {
                 newKey = state.attributes[i].key + 1
             }
         }
-        setState({...state, attributes: [...state.attributes, {
-                key: `${newKey}`,
-                name: "",
-                type: "",
-                isNullable: true,
-                isUnique: false
-            }]})
+
+        const newAttribute = {
+            key: newKey,
+            name: "",
+            type: "",
+            isNullable: true,
+            isUnique: false
+        }
+
+        setState({...state, attributes: [...state.attributes, newAttribute]})
+
+        props.handleAddAttribute(props.data.key, props.data.category, newAttribute)
     }
 
     const removeAttribute = (key) => {
         const idx = getIndex(key);
         const attributes = [...state.attributes];
+        const attribute = state.attributes[idx];
         attributes.splice(idx, 1);
         setState({...state, attributes})
+
+        props.handleDeleteAttribute(props.data.key, props.data.category, attribute);
     }
 
     const inActiveColor = "#ddd";
@@ -124,7 +132,7 @@ const Editor = (props) => {
     const uniqueColor = "red";
 
     return <Card variant="outlined" sx={{ width: 420 }}>
-        <CardHeader title="Editor" subheader={<span style={{ textTransform: "capitalize", letterSpacing: "0.1rem", fontSize: "14px" }}><i>{state.category}</i></span>}/>
+        <CardHeader title="Editor" subheader={<span style={{ textTransform: "capitalize", letterSpacing: "0.1rem", fontSize: "14px" }}>{state.category}</span>}/>
         <CardContent>
             <TextField value={state.name} onChange={handleNameChange} fullWidth={true} label="Name"></TextField>
             <Divider sx={{ marginTop: 2 }}/>

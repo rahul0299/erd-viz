@@ -20,6 +20,8 @@ const DiagramWrapper = () => {
             },
             selectedData: null,
             skipsDiagramUpdate: false,
+            entities: [],
+            relations: []
         }
     }
 
@@ -108,6 +110,21 @@ const DiagramWrapper = () => {
                     if (nd && idx === undefined) {  // nodes won't be added if they already exist
                         mapNodeKeyIdx.current.set(nd.key, narr.length);
                         narr.push(nd);
+
+                        if (nd.category === "entity") {
+                            newState.entities.push({
+                                key: nd.key,
+                                attributes: [],
+                                index: narr.length - 1,
+                                primaryKey: null
+                            })
+                        } else if (nd.category === "relation") {
+                            newState.relations.push({
+                                key: nd.key,
+                                attributes: [],
+                                index: narr.length - 1
+                            })
+                        }
                     }
                 });
             }
@@ -165,7 +182,7 @@ const DiagramWrapper = () => {
                 newState.modelData = modifiedModelData;
             }
 
-            newState.skipsDiagramUpdate = true;
+            // newState.skipsDiagramUpdate = true;
             return newState;
         })
     }
@@ -181,10 +198,77 @@ const DiagramWrapper = () => {
         return () => clearTimeout(delay);
     }, []);
 
-    // onAddingNode
-    // 1. Create new node in nodeDataArray
-    // 2. Create a link between Entity and Attribute
-    // 3. Update map
+    const getEntityByKey = key => {
+        for (let i=0;i<state.entities.length;i++) {
+            if (state.entities[i].key === key) {
+                return [state.entities[i], i];
+            }
+        }
+
+        return [null, null];
+    }
+    const handleAddAttribute = (parentKey, parentType, attribute) => {
+        if (parentType === "entity") {
+            const [entity, idx] = getEntityByKey(parentKey);
+
+            console.log(entity, idx);
+
+            const newNode = {
+                key: attribute.key,
+                category: "attribute",
+                loc: entity.loc,
+                color: "transparent",
+                isPrimary: false
+            }
+
+            const newLink = {
+                from: entity.key,
+                to: newNode.key
+            }
+
+            const nodeDataArray = [...state.nodeDataArray, newNode]
+            const linkDataArray = [...state.linkDataArray, newLink]
+
+            refreshNodeIndex(nodeDataArray)
+            refreshLinkIndex(linkDataArray)
+
+            setState(prevState => {
+                const nextState = {...prevState, nodeDataArray, linkDataArray}
+                nextState.entities[idx].attributes.push(attribute);
+                nextState.skipsDiagramUpdate = false;
+                return nextState;
+            });
+        }
+    }
+
+    const handleDeleteAttribute = (parentKey, parentType, attribute) => {
+        if (parentType === "entity") {
+            const [entity, idx] = getEntityByKey(parentKey);
+
+            const nodeIndex = mapNodeKeyIdx.current.get(attribute.key);
+
+            let i;
+            for(i=0;i<entity.attributes.length;i++) {
+                if (entity.attributes[i].key === attribute.key) {
+                    break;
+                }
+            }
+
+            setState(prevState => {
+                const nextState = {...prevState}
+                nextState.nodeDataArray.splice(nodeIndex, 1);
+                nextState.entities[idx].attributes.splice(i, 1);
+
+                nextState.linkDataArray = nextState.linkDataArray.filter(link => link.from !== attribute.key && link.to !== attribute.key);
+                refreshNodeIndex(nextState.nodeDataArray);
+                refreshLinkIndex(nextState.linkDataArray);
+
+                return nextState;
+            })
+
+
+        }
+    }
 
     // onRemovingNode
     // 1. Find the node in nodeDataArray
@@ -229,7 +313,12 @@ const DiagramWrapper = () => {
                 right: 10,
                 zIndex: 2
             }}>
-                <Editor style={{ display: state.selectedData ? "visible" : "none" }} data={state.selectedData}/>
+                <Editor
+                    style={{ display: state.selectedData ? "visible" : "none" }}
+                    data={state.selectedData}
+                    handleAddAttribute={handleAddAttribute}
+                    handleDeleteAttribute={handleDeleteAttribute}
+                />
             </div>
             : null }
     </>
