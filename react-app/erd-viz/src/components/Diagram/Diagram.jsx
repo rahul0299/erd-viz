@@ -1,5 +1,6 @@
 import * as go from "gojs";
 import {ReactDiagram} from "gojs-react";
+import CustomModel from "../../models/CustomModel.jsx";
 
 const Diagram = (props) => {
     const initDiagram = () => {
@@ -10,10 +11,7 @@ const Diagram = (props) => {
                 {
                     'undoManager.isEnabled': true,
                     allowDrop: true,
-                    model: new go.GraphLinksModel(
-                        {
-                            linkKeyProperty: 'key'  // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel
-                        }),
+                    model: new CustomModel(),
                 });
 
         diagram.grid =
@@ -64,7 +62,7 @@ const Diagram = (props) => {
                     margin: new go.Margin(5,0,0 ,0),
                     alignment: new go.Spot(0.5, 1, 0, 5),
                     alignmentFocus: go.Spot.Top,
-                }, new go.Binding('text').makeTwoWay())
+                }, new go.Binding('text', 'name').makeTwoWay())
             );
 
         diagram.nodeTemplateMap = new go.Map();

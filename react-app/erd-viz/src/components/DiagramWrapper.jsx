@@ -25,6 +25,15 @@ const DiagramWrapper = () => {
         }
     }
 
+    const generateUUID = () => {
+        const uuid = 'xxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+        return uuid.substring(0, 4);
+    }
+
     const [state, setState] = useState(getInitialState());
 
     const mapNodeKeyIdx = useRef(new Map());
@@ -45,7 +54,7 @@ const DiagramWrapper = () => {
         switch(name) {
             case 'ChangedSelection': {
                 const selected = e.subject.first();
-                console.log("Selection Changed " + selected)
+
                 setState(prevState => {
                     const newState = {...prevState}
                     if (selected) {
@@ -54,13 +63,11 @@ const DiagramWrapper = () => {
                             if (idx !== undefined && idx >= 0) {
                                 newState.selectedData = prevState.nodeDataArray[idx];
                             }
-                            console.log(idx)
                         }  else if (selected instanceof go.Link) {
                             const idx = mapLinkKeyIdx.current.get(selected.key);
                             if (idx !== undefined && idx >= 0) {
                                 newState.selectedData = prevState.linkDataArray[idx];
                             }
-                            console.log(idx)
                         }
                     } else {
                         newState.selectedData = null;
@@ -106,8 +113,9 @@ const DiagramWrapper = () => {
             if (insertedNodeKeys) {
                 insertedNodeKeys.forEach(key => {
                     const nd = modifiedNodeMap.get(key);
+                    // nd.key = generateUUID();
                     const idx = mapNodeKeyIdx.current.get(key);
-                    if (nd && idx === undefined) {  // nodes won't be added if they already exist
+                    if (nd && idx === undefined) {
                         mapNodeKeyIdx.current.set(nd.key, narr.length);
                         narr.push(nd);
 
@@ -187,17 +195,6 @@ const DiagramWrapper = () => {
         })
     }
 
-    useEffect(() => {
-        // Simulate a delay in initialization (replace this with your actual initialization logic)
-        const delay = setTimeout(() => {
-            // Set the state to indicate that initialization is complete
-            setState(getInitialState());
-        }, 2000); // Adjust the delay as needed
-
-        // Cleanup function to clear the timeout in case component unmounts before initialization completes
-        return () => clearTimeout(delay);
-    }, []);
-
     const getEntityByKey = key => {
         for (let i=0;i<state.entities.length;i++) {
             if (state.entities[i].key === key) {
@@ -207,23 +204,26 @@ const DiagramWrapper = () => {
 
         return [null, null];
     }
-    const handleAddAttribute = (parentKey, parentType, attribute) => {
+    const handleAddAttribute = (parentKey, parentType) => {
         if (parentType === "entity") {
             const [entity, idx] = getEntityByKey(parentKey);
 
-            console.log(entity, idx);
-
             const newNode = {
-                key: attribute.key,
+                key: generateUUID(),
                 category: "attribute",
                 loc: entity.loc,
                 color: "transparent",
-                isPrimary: false
+                isPrimary: false,
+                isUnique: false,
+                isNullable: true,
+                type: "varchar",
+                name: "attribute"
             }
 
             const newLink = {
                 from: entity.key,
-                to: newNode.key
+                to: newNode.key,
+                key: generateUUID()
             }
 
             const nodeDataArray = [...state.nodeDataArray, newNode]
@@ -234,48 +234,86 @@ const DiagramWrapper = () => {
 
             setState(prevState => {
                 const nextState = {...prevState, nodeDataArray, linkDataArray}
-                nextState.entities[idx].attributes.push(attribute);
+                nextState.entities[idx].attributes.push(newNode.key);
                 nextState.skipsDiagramUpdate = false;
                 return nextState;
             });
         }
     }
 
-    const handleDeleteAttribute = (parentKey, parentType, attribute) => {
+    const handleDeleteAttribute = (parentKey, parentType, deleteKey) => {
         if (parentType === "entity") {
             const [entity, idx] = getEntityByKey(parentKey);
+            console.log(idx)
 
-            const nodeIndex = mapNodeKeyIdx.current.get(attribute.key);
-
-            let i;
-            for(i=0;i<entity.attributes.length;i++) {
-                if (entity.attributes[i].key === attribute.key) {
-                    break;
-                }
-            }
+            const deleteIndex = mapNodeKeyIdx.current.get(deleteKey);
 
             setState(prevState => {
                 const nextState = {...prevState}
-                nextState.nodeDataArray.splice(nodeIndex, 1);
-                nextState.entities[idx].attributes.splice(i, 1);
+                nextState.nodeDataArray.splice(deleteIndex, 1);
+                nextState.entities[idx].attributes = nextState.entities[idx].attributes.filter(key => key !== deleteKey);
 
-                nextState.linkDataArray = nextState.linkDataArray.filter(link => link.from !== attribute.key && link.to !== attribute.key);
+                nextState.linkDataArray = nextState.linkDataArray.filter(link => link.from !== deleteKey && link.to !== deleteKey);
                 refreshNodeIndex(nextState.nodeDataArray);
                 refreshLinkIndex(nextState.linkDataArray);
 
                 return nextState;
             })
-
-
         }
     }
 
-    // onRemovingNode
-    // 1. Find the node in nodeDataArray
-    // 2. Find the link connecting the node and entity
-    // 3. Delete the node
-    // 4. Delete the link
-    // 5. Update maps
+    const handleAttributeDataChange = (attributeKey, property, value) => {
+        const idx = mapNodeKeyIdx.current.get(attributeKey);
+        setState(prevState => {
+            const nextState = {...prevState};
+            nextState.nodeDataArray[idx][property] = value;
+            return nextState;
+        });
+    }
+
+    const handlePrimaryKeyChange = (entityKey, attributeKey) => {
+        const [entity, idx] = getEntityByKey(entityKey);
+        const nodeIdx = mapNodeKeyIdx.current.get(attributeKey);
+
+        setState(prevState => {
+            const nextState = {...prevState}
+            nextState.entities[idx].primaryKey = attributeKey;
+            nextState.nodeDataArray[nodeIdx].isPrimary = true;
+            nextState.nodeDataArray[nodeIdx].isUnique = true;
+            nextState.nodeDataArray[nodeIdx].isNullable = false;
+            return nextState;
+        })
+    }
+
+    const collateData = (selected) => {
+        if (selected) {
+            const data = {
+                name: selected.text,
+                key: selected.key,
+                category: selected.category,
+                attributes: [],
+                primaryKey: selected.primaryKey
+            }
+
+            let i=0;
+            for (;i<state.entities.length;i++) {
+                if (state.entities[i].key === selected.key) {
+                    break;
+                }
+            }
+
+            if (i < state.entities.length) {
+                state.entities[i].attributes.forEach(attr => {
+                    const attributeIdx = mapNodeKeyIdx.current.get(attr);
+                    data.attributes.push({...state.nodeDataArray[attributeIdx]})
+                })
+            }
+
+            return data;
+        }
+
+        return null;
+    }
 
     return <>
     {state ?
@@ -303,7 +341,7 @@ const DiagramWrapper = () => {
         }}>
             <JSONPretty data={state || null} />
         </div>
-        { state.selectedData ?
+        { state.selectedData !== null ?
             <div style={{
                 width: "fit-content",
                 height: "500px",
@@ -315,9 +353,11 @@ const DiagramWrapper = () => {
             }}>
                 <Editor
                     style={{ display: state.selectedData ? "visible" : "none" }}
-                    data={state.selectedData}
+                    data={collateData(state.selectedData)}
                     handleAddAttribute={handleAddAttribute}
                     handleDeleteAttribute={handleDeleteAttribute}
+                    handlePrimaryKeyChange={handlePrimaryKeyChange}
+                    handleAttributeDataChange={handleAttributeDataChange}
                 />
             </div>
             : null }
