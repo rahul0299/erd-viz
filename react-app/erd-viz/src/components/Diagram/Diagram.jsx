@@ -30,7 +30,7 @@ const Diagram = (props) => {
                     new go.Binding('fill', 'color')),
                 $(go.TextBlock,
                     { margin: 8, editable: true },  // some room around the text
-                    new go.Binding('text').makeTwoWay()
+                    new go.Binding('text', "name").makeTwoWay()
                 )
             );
 
@@ -52,7 +52,7 @@ const Diagram = (props) => {
                 $(go.Shape, "Circle", {
                     width: 25,
                     height: 25,
-                    fill: "lightblue",
+                    fill: "transparent",
                     stroke: "black",
                     strokeWidth: 2,
                     isPanelMain: true
@@ -62,7 +62,7 @@ const Diagram = (props) => {
                     margin: new go.Margin(5,0,0 ,0),
                     alignment: new go.Spot(0.5, 1, 0, 5),
                     alignmentFocus: go.Spot.Top,
-                }, new go.Binding('text', 'name').makeTwoWay())
+                }, new go.Binding('text', 'name'))
             );
 
         diagram.nodeTemplateMap = new go.Map();
@@ -71,7 +71,7 @@ const Diagram = (props) => {
         diagram.nodeTemplateMap.add("attribute", attributeNode);
 
         diagram.linkTemplate = $(go.Link, $(go.Shape, { strokeWidth: 2}));
-
+        diagram.skipsDiagramUpdate = false;
         diagram.addDiagramListener('ChangedSelection', props.onDiagramEvent);
 
         return diagram;
@@ -82,7 +82,7 @@ const Diagram = (props) => {
         divClassName="diagram-component"
         nodeDataArray={props.nodeDataArray}
         linkDataArray={props.linkDataArray}
-        // modelData={props.modelData}
+        modelData={props.modelData}
         onModelChange={props.onModelChange}
         skipsDiagramUpdate={props.skipsDiagramUpdate}
         />

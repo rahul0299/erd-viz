@@ -1,25 +1,18 @@
 import * as go from 'gojs';
 
 import './DiagramWrapper.css';
-import {useEffect, useRef, useState} from "react";
+import { useRef, useState} from "react";
 import Diagram from "./Diagram/Diagram.jsx";
 import Editor from "./Editor/Editor.jsx";
 import JSONPretty from "react-json-pretty";
 
-
-// TODO: Communicate from diagram/model to inspector. On clicking an entity also find its connected attributes and pass.
-// TODO: Communicate back from inspector. Properties modified should reflect in the graph.
 
 const DiagramWrapper = () => {
     const getInitialState = () => {
         return {
             nodeDataArray: [],
             linkDataArray: [],
-            modelData: {
-                canRelink: true
-            },
             selectedData: null,
-            skipsDiagramUpdate: false,
             entities: [],
             relations: []
         }
@@ -124,7 +117,6 @@ const DiagramWrapper = () => {
                                 key: nd.key,
                                 attributes: [],
                                 index: narr.length - 1,
-                                primaryKey: null
                             })
                         } else if (nd.category === "relation") {
                             newState.relations.push({
@@ -138,9 +130,7 @@ const DiagramWrapper = () => {
             }
 
             if (removedNodeKeys) {
-                // TODO: On deleting an entity, delete all its nodes
-                // TODO: On deleting a relation, delete all its attributes
-                // TODO: On deleting an attribute, delete its link
+
                 narr = narr.filter(nd => {
                     if (removedNodeKeys.includes(nd.key)) {
                         return false;
@@ -207,12 +197,14 @@ const DiagramWrapper = () => {
     const handleAddAttribute = (parentKey, parentType) => {
         if (parentType === "entity") {
             const [entity, idx] = getEntityByKey(parentKey);
+            const i = mapNodeKeyIdx.current.get(parentKey);
+            const entityNode = state.nodeDataArray[i];
 
             const newNode = {
                 key: generateUUID(),
                 category: "attribute",
-                loc: entity.loc,
-                color: "transparent",
+                loc: getRandomLocation(entityNode.loc),
+                fill: "transparent",
                 isPrimary: false,
                 isUnique: false,
                 isNullable: true,
@@ -262,33 +254,27 @@ const DiagramWrapper = () => {
         }
     }
 
-    const handleAttributeDataChange = (attributeKey, property, value) => {
-        const idx = mapNodeKeyIdx.current.get(attributeKey);
+    const handlePropertyChange = (key, changes) => {
+        const idx = mapNodeKeyIdx.current.get(key);
+
         setState(prevState => {
             const nextState = {...prevState};
-            nextState.nodeDataArray[idx][property] = value;
+            nextState.nodeDataArray = [...prevState.nodeDataArray];
+            // nextState.nodeDataArray[idx][property] = value;
+            nextState.nodeDataArray[idx] = {...nextState.nodeDataArray[idx], ...changes}
+
+            if (nextState.selectedData && key === nextState.selectedData.key) {
+                nextState.selectedData = {...nextState.nodeDataArray[idx] }
+            }
+
             return nextState;
         });
-    }
-
-    const handlePrimaryKeyChange = (entityKey, attributeKey) => {
-        const [entity, idx] = getEntityByKey(entityKey);
-        const nodeIdx = mapNodeKeyIdx.current.get(attributeKey);
-
-        setState(prevState => {
-            const nextState = {...prevState}
-            nextState.entities[idx].primaryKey = attributeKey;
-            nextState.nodeDataArray[nodeIdx].isPrimary = true;
-            nextState.nodeDataArray[nodeIdx].isUnique = true;
-            nextState.nodeDataArray[nodeIdx].isNullable = false;
-            return nextState;
-        })
     }
 
     const collateData = (selected) => {
         if (selected) {
             const data = {
-                name: selected.text,
+                name: selected.name,
                 key: selected.key,
                 category: selected.category,
                 attributes: [],
@@ -311,8 +297,17 @@ const DiagramWrapper = () => {
 
             return data;
         }
-
         return null;
+    }
+
+    const getRandomLocation = (location) => {
+        const min = 150;
+        const dist = 50;
+        const x = -150 + (Math.random() * min) + dist;
+        const y = (Math.random() * min) + dist;
+
+        const point = go.Point.parse(location)
+        return `${point.x + x} ${point.y + y}`;
     }
 
     return <>
@@ -321,7 +316,7 @@ const DiagramWrapper = () => {
                 nodeDataArray={state.nodeDataArray}
                 linkDataArray={state.linkDataArray}
                 modelData={state.modelData}
-                skipsDiagramUpdate={state.skipsDiagramUpdate}
+                skipsDiagramUpdate={false}
                 onDiagramEvent={handleDiagramEvent}
                 onModelChange={handleModelChange}
             /> : null}
@@ -356,8 +351,7 @@ const DiagramWrapper = () => {
                     data={collateData(state.selectedData)}
                     handleAddAttribute={handleAddAttribute}
                     handleDeleteAttribute={handleDeleteAttribute}
-                    handlePrimaryKeyChange={handlePrimaryKeyChange}
-                    handleAttributeDataChange={handleAttributeDataChange}
+                    handlePropertyChange={handlePropertyChange}
                 />
             </div>
             : null }

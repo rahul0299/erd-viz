@@ -3,8 +3,6 @@ import { ReactPalette } from "gojs-react";
 
 import './Palette.css';
 
-// TODO: Fix entity showing up behind copyright text. Move it down somehow
-
 function initPalette() {
     const $= go.GraphObject.make;
     // set your license key here before creating the Palette: go.Palette.licenseKey = "...";
@@ -29,7 +27,7 @@ function initPalette() {
                 new go.Binding('fill', 'color')),
             $(go.TextBlock,
                 { margin: 8, editable: true },  // some room around the text
-                new go.Binding('text').makeTwoWay()
+                new go.Binding('text', 'name').makeTwoWay()
             )
         );
 
@@ -42,7 +40,7 @@ function initPalette() {
                 new go.Binding('fill', 'color')),
             $(go.TextBlock,
                 { margin: 8, editable: true, font: "normal 10pt sans-serif" },  // some room around the text
-                new go.Binding('text').makeTwoWay()
+                new go.Binding('text', 'name').makeTwoWay()
             )
         );
 
@@ -64,17 +62,14 @@ function initPalette() {
  * This function handles any changes to the GoJS model.
  * It is here that you would make any updates to your React state, which is discussed below.
  */
-function handleModelChange(changes) {
-    // alert('GoJS model changed!');
-}
 
 const Palette = () => {
     return <ReactPalette
         initPalette={initPalette}
         divClassName='palette-component'
         nodeDataArray={[
-            { key: 0, text: 'Entity', color: 'white', loc: '0 0', category: "entity" },
-            { key: 1, text: 'Relation', color: 'white', loc: '200 0', category: "relation" },
+            { key: 0, name: 'Entity', color: 'white', loc: '0 0', category: "entity", primaryKey: null },
+            { key: 1, name: 'Relation', color: 'white', loc: '200 0', category: "relation" },
         ]}
     />
 }
