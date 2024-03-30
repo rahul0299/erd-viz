@@ -194,6 +194,17 @@ const DiagramWrapper = () => {
 
         return [null, null];
     }
+
+    const getRelationByKey = key => {
+        for (let i=0;i<state.relations.length;i++) {
+            if (state.relations[i].key === key) {
+                return [state.relations[i], i];
+            }
+        }
+
+        return [null, null];
+    }
+
     const handleAddAttribute = (parentKey, parentType) => {
         if (parentType === "entity") {
             const [entity, idx] = getEntityByKey(parentKey);
@@ -230,13 +241,47 @@ const DiagramWrapper = () => {
                 nextState.skipsDiagramUpdate = false;
                 return nextState;
             });
+        } else if (parentType === "relation") {
+            const [relation, idx] = getRelationByKey(parentKey);
+            const i = mapNodeKeyIdx.current.get(parentKey);
+            const relationNode = state.nodeDataArray[i];
+
+            const newNode = {
+                key: generateUUID(),
+                category: "attribute",
+                loc: getRandomLocation(relationNode.loc),
+                fill: "transparent",
+                isPrimary: false,
+                isUnique: false,
+                isNullable: true,
+                type: "varchar",
+                name: "attribute"
+            }
+
+            const newLink = {
+                from: relation.key,
+                to: newNode.key,
+                key: generateUUID()
+            }
+
+            const nodeDataArray = [...state.nodeDataArray, newNode]
+            const linkDataArray = [...state.linkDataArray, newLink]
+
+            refreshNodeIndex(nodeDataArray)
+            refreshLinkIndex(linkDataArray)
+
+            setState(prevState => {
+                const nextState = {...prevState, nodeDataArray, linkDataArray}
+                nextState.relations[idx].attributes.push(newNode.key);
+                nextState.skipsDiagramUpdate = false;
+                return nextState;
+            });
         }
     }
 
     const handleDeleteAttribute = (parentKey, parentType, deleteKey) => {
         if (parentType === "entity") {
             const [entity, idx] = getEntityByKey(parentKey);
-            console.log(idx)
 
             const deleteIndex = mapNodeKeyIdx.current.get(deleteKey);
 
@@ -244,6 +289,22 @@ const DiagramWrapper = () => {
                 const nextState = {...prevState}
                 nextState.nodeDataArray.splice(deleteIndex, 1);
                 nextState.entities[idx].attributes = nextState.entities[idx].attributes.filter(key => key !== deleteKey);
+
+                nextState.linkDataArray = nextState.linkDataArray.filter(link => link.from !== deleteKey && link.to !== deleteKey);
+                refreshNodeIndex(nextState.nodeDataArray);
+                refreshLinkIndex(nextState.linkDataArray);
+
+                return nextState;
+            })
+        } else if (parentType === "relation") {
+            const [entity, idx] = getRelationByKey(parentKey);
+
+            const deleteIndex = mapNodeKeyIdx.current.get(deleteKey);
+
+            setState(prevState => {
+                const nextState = {...prevState}
+                nextState.nodeDataArray.splice(deleteIndex, 1);
+                nextState.relations[idx].attributes = nextState.relations[idx].attributes.filter(key => key !== deleteKey);
 
                 nextState.linkDataArray = nextState.linkDataArray.filter(link => link.from !== deleteKey && link.to !== deleteKey);
                 refreshNodeIndex(nextState.nodeDataArray);
@@ -281,18 +342,34 @@ const DiagramWrapper = () => {
                 primaryKey: selected.primaryKey
             }
 
-            let i=0;
-            for (;i<state.entities.length;i++) {
-                if (state.entities[i].key === selected.key) {
-                    break;
+            if (data.category === "entity") {
+                let i=0;
+                for (;i<state.entities.length;i++) {
+                    if (state.entities[i].key === selected.key) {
+                        break;
+                    }
                 }
-            }
 
-            if (i < state.entities.length) {
-                state.entities[i].attributes.forEach(attr => {
-                    const attributeIdx = mapNodeKeyIdx.current.get(attr);
-                    data.attributes.push({...state.nodeDataArray[attributeIdx]})
-                })
+                if (i < state.entities.length) {
+                    state.entities[i].attributes.forEach(attr => {
+                        const attributeIdx = mapNodeKeyIdx.current.get(attr);
+                        data.attributes.push({...state.nodeDataArray[attributeIdx]})
+                    })
+                }
+            } else if (data.category === "relation") {
+                let i=0;
+                for (;i<state.relations.length;i++) {
+                    if (state.relations[i].key === selected.key) {
+                        break;
+                    }
+                }
+
+                if (i < state.relations.length) {
+                    state.relations[i].attributes.forEach(attr => {
+                        const attributeIdx = mapNodeKeyIdx.current.get(attr);
+                        data.attributes.push({...state.nodeDataArray[attributeIdx]})
+                    })
+                }
             }
 
             return data;

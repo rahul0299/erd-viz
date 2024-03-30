@@ -30,7 +30,7 @@ const Diagram = (props) => {
                     new go.Binding('fill', 'color')),
                 $(go.TextBlock,
                     { margin: 8, editable: true },  // some room around the text
-                    new go.Binding('text', "name").makeTwoWay()
+                    new go.Binding('text', 'name').makeTwoWay()
                 )
             );
 
@@ -43,7 +43,7 @@ const Diagram = (props) => {
                     new go.Binding('fill', 'color')),
                 $(go.TextBlock,
                     { margin: 8, editable: true, font: "normal 10pt sans-serif" },  // some room around the text
-                    new go.Binding('text').makeTwoWay()
+                    new go.Binding('text', 'name').makeTwoWay()
                 )
             );
 
