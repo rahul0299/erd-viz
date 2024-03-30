@@ -10,6 +10,10 @@ public class Attribute implements Node {
 
     String dataType;
 
+    Boolean isNullable;
+
+    Boolean isPrimary;
+
     public Attribute(String name) {
         this.name = name;
     }

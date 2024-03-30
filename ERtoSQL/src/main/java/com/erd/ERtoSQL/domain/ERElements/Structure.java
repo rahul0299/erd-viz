@@ -12,12 +12,18 @@ import java.util.List;
 @Data
 public abstract class Structure {
     List<Attribute> attributes;
+    Attribute primaryKey;
 
     public Structure(){
         attributes= new ArrayList<>();
     }
 
     public void addToAttributes(Attribute attribute){
-        attributes.add(attribute);
+        if(attribute.isPrimary!=null && attribute.isPrimary){
+            primaryKey=attribute;
+        } else {
+            attributes.add(attribute);
+        }
+
     }
 }
