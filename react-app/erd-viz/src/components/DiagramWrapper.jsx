@@ -1,13 +1,14 @@
 import * as go from 'gojs';
-import { ReactDiagram } from "gojs-react";
 
 import './DiagramWrapper.css';
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import Diagram from "./Diagram/Diagram.jsx";
 import Editor from "./Editor/Editor.jsx";
 import JSONPretty from "react-json-pretty";
 
 
+// TODO: Communicate from diagram/model to inspector. On clicking an entity also find its connected attributes and pass.
+// TODO: Communicate back from inspector. Properties modified should reflect in the graph.
 
 const DiagramWrapper = () => {
     const getInitialState = () => {
@@ -18,23 +19,23 @@ const DiagramWrapper = () => {
                 canRelink: true
             },
             selectedData: null,
-            skipsDiagramUpdate: false
+            skipsDiagramUpdate: false,
         }
     }
 
     const [state, setState] = useState(getInitialState());
 
-    const mapNodeKeyIdx = new Map();
-    const mapLinkKeyIdx = new Map();
+    const mapNodeKeyIdx = useRef(new Map());
+    const mapLinkKeyIdx = useRef(new Map());
 
     const refreshNodeIndex = (nodeArr) => {
-        mapNodeKeyIdx.clear();
-        nodeArr.forEach((node, i) => mapNodeKeyIdx.set(node.key, i))
+        mapNodeKeyIdx.current.clear();
+        nodeArr.forEach((node, i) => mapNodeKeyIdx.current.set(node.key, i))
     }
 
     const refreshLinkIndex = (linkArr) => {
-        mapLinkKeyIdx.clear();
-        linkArr.forEach((link, i) => mapLinkKeyIdx.set(link.key, i))
+        mapLinkKeyIdx.current.clear();
+        linkArr.forEach((link, i) => mapLinkKeyIdx.current.set(link.key, i))
     }
 
     const handleDiagramEvent = (e) => {
@@ -42,23 +43,25 @@ const DiagramWrapper = () => {
         switch(name) {
             case 'ChangedSelection': {
                 const selected = e.subject.first();
-
+                console.log("Selection Changed " + selected)
                 setState(prevState => {
                     const newState = {...prevState}
                     if (selected) {
                         if (selected instanceof go.Node) {
-                            const idx = mapNodeKeyIdx.get(selected.key);
+                            const idx = mapNodeKeyIdx.current.get(selected.key);
                             if (idx !== undefined && idx >= 0) {
                                 newState.selectedData = prevState.nodeDataArray[idx];
                             }
+                            console.log(idx)
                         }  else if (selected instanceof go.Link) {
-                            const idx = mapLinkKeyIdx.get(selected.key);
+                            const idx = mapLinkKeyIdx.current.get(selected.key);
                             if (idx !== undefined && idx >= 0) {
                                 newState.selectedData = prevState.linkDataArray[idx];
                             }
-                        } else {
-                            newState.selectedData = null;
+                            console.log(idx)
                         }
+                    } else {
+                        newState.selectedData = null;
                     }
 
                     return newState;
@@ -88,7 +91,7 @@ const DiagramWrapper = () => {
             if (modifiedNodeData) {
                 modifiedNodeData.forEach(nd => {
                     modifiedNodeMap.set(nd.key, nd);
-                    const idx = mapNodeKeyIdx.get(nd.key);
+                    const idx = mapNodeKeyIdx.current.get(nd.key);
                     if (idx !== undefined && idx >= 0) {
                         narr[idx] = nd;
                         if (newState.selectedData && newState.selectedData.key === nd.key) {
@@ -101,15 +104,18 @@ const DiagramWrapper = () => {
             if (insertedNodeKeys) {
                 insertedNodeKeys.forEach(key => {
                     const nd = modifiedNodeMap.get(key);
-                    const idx = mapNodeKeyIdx.get(key);
+                    const idx = mapNodeKeyIdx.current.get(key);
                     if (nd && idx === undefined) {  // nodes won't be added if they already exist
-                        mapNodeKeyIdx.set(nd.key, narr.length);
+                        mapNodeKeyIdx.current.set(nd.key, narr.length);
                         narr.push(nd);
                     }
                 });
             }
 
             if (removedNodeKeys) {
+                // TODO: On deleting an entity, delete all its nodes
+                // TODO: On deleting a relation, delete all its attributes
+                // TODO: On deleting an attribute, delete its link
                 narr = narr.filter(nd => {
                     if (removedNodeKeys.includes(nd.key)) {
                         return false;
@@ -125,7 +131,7 @@ const DiagramWrapper = () => {
             if (modifiedLinkData) {
                 modifiedLinkData.forEach(ld => {
                     modifiedLinkMap.set(ld.key, ld);
-                    const idx = mapLinkKeyIdx.get(ld.key);
+                    const idx = mapLinkKeyIdx.current.get(ld.key);
                     if (idx !== undefined && idx >= 0) {
                         larr[idx] = ld;
                         if (newState.selectedData && newState.selectedData.key === ld.key) {
@@ -138,9 +144,9 @@ const DiagramWrapper = () => {
             if (insertedLinkKeys) {
                 insertedLinkKeys.forEach(key => {
                     const ld = modifiedLinkMap.get(key);
-                    const idx = mapLinkKeyIdx.get(key);
+                    const idx = mapLinkKeyIdx.current.get(key);
                     if (ld && idx === undefined) {  // links won't be added if they already exist
-                        mapLinkKeyIdx.set(ld.key, larr.length);
+                        mapLinkKeyIdx.current.set(ld.key, larr.length);
                         larr.push(ld);
                     }
                 });
@@ -174,6 +180,18 @@ const DiagramWrapper = () => {
         // Cleanup function to clear the timeout in case component unmounts before initialization completes
         return () => clearTimeout(delay);
     }, []);
+
+    // onAddingNode
+    // 1. Create new node in nodeDataArray
+    // 2. Create a link between Entity and Attribute
+    // 3. Update map
+
+    // onRemovingNode
+    // 1. Find the node in nodeDataArray
+    // 2. Find the link connecting the node and entity
+    // 3. Delete the node
+    // 4. Delete the link
+    // 5. Update maps
 
     return <>
     {state ?
