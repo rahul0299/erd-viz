@@ -398,19 +398,7 @@ const DiagramWrapper = () => {
                 onModelChange={handleModelChange}
             /> : null}
 
-        <div style={{
-            width: "420px",
-            height: "200px",
-            overflow: "scroll",
-            position: "absolute",
-            top: 10,
-            right: 10,
-            zIndex: 2,
-            boxSizing: "border-box",
-            border: "1px solid grey",
-            borderRadius: "5px",
-            padding: "5px"
-        }}>
+        <div className={`json-viewer ${state.selectedData !== null ? '' : 'json-viewer-expanded'}`}>
             <JSONPretty data={state || null} />
         </div>
         { state.selectedData !== null ?
