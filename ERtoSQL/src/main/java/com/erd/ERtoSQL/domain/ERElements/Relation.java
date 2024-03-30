@@ -1,14 +1,13 @@
-package com.erd.ERtoSQL.domain;
+package com.erd.ERtoSQL.domain.ERElements;
 
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class Relation implements Node {
+public class Relation extends Structure implements Node {
 
     String name;
-    List<Attribute> attributes;
 
     public Relation(String name) {
         this.name = name;

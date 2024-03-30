@@ -1,4 +1,4 @@
-package com.erd.ERtoSQL.domain;
+package com.erd.ERtoSQL.domain.ERElements;
 
 
 import lombok.Data;

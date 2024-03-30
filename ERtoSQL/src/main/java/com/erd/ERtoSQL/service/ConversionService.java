@@ -1,8 +1,7 @@
 package com.erd.ERtoSQL.service;
 
-import com.erd.ERtoSQL.domain.Node;
+import com.erd.ERtoSQL.domain.ERElements.Node;
 import com.erd.ERtoSQL.util.ConversionUtils;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +23,8 @@ public class ConversionService {
         linksMap = ConversionUtils.
                 constructLinksMap(jsonObject.getJSONArray("linkDataArray"));
 
-        return "Hi";
+        ConversionUtils.addAttributes(linksMap,nodesMap);
+
+        return nodesMap.toString();
     }
 }
