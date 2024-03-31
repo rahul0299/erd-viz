@@ -21,7 +21,7 @@ public class ConversionService {
 
     HashMap<String, Attribute> attributesMap;
 
-    HashMap<String, HashMap<String,List<String>>> relationTables = new HashMap<>();
+    HashMap<String, HashMap<String, List<String>>> relationInfo = new HashMap<>();
 
 
     public String handleErToSQL(String erData) {
@@ -31,7 +31,7 @@ public class ConversionService {
 
         constructLinksMap(jsonObject.getJSONArray("linkDataArray"));
 
-        findInfoForTable();
+        findInfoForRelations();
 
 //        addAttributes();
 
@@ -93,47 +93,40 @@ public class ConversionService {
 
     }
 
-    private void findInfoForTable() {
+    private void findInfoForRelations() {
         for (String relation : relationMap.keySet()) {
 
             if (linksMap.get(relation) == null) {
                 continue;
             }
 
+            relationInfo.put(relation, new HashMap<>());
+            relationInfo.get(relation).put("MergeWith", new ArrayList<>());
+            relationInfo.get(relation).put("MergeWithWeak", new ArrayList<>());
+            relationInfo.get(relation).put("PrimaryKeyException", new ArrayList<>());
+            relationInfo.get(relation).put("AttachedToEntities", new ArrayList<>());
 
-            List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
-            List<String> primaryKeys = new ArrayList<>();
-            List<String> attributes = new ArrayList<>(relationMap.get(relation).getAttributes());
+
             for (MutablePair<String, Link> pair : linksMap.get(relation)) {
-                if (pair.getRight().getLowerBound().equalsIgnoreCase("1") &&
+                if (entityMap.get(pair.getLeft()) != null && entityMap.get(pair.getLeft()).getIsWeak()) {
+                    //Merge
+                    entityMap.get(pair.getLeft()).setMergeWith(relation);
+                    relationInfo.get(relation).get("MergeWithWeak").add(pair.getLeft());
+
+                } else if (pair.getRight().getLowerBound().equalsIgnoreCase("1") &&
                         pair.getRight().getUpperBound().equalsIgnoreCase("1")) {
                     //Merge
                     entityMap.get(pair.getLeft()).setMergeWith(relation);
-                    attributes.addAll(entityMap.get(pair.getLeft()).getAttributes());
-
-                } else if (entityMap.get(pair.getLeft()) != null && entityMap.get(pair.getLeft()).getIsWeak()) {
-                    //Merge
-                    entityMap.get(pair.getLeft()).setMergeWith(relation);
-                    attributes.addAll(entityMap.get(pair.getLeft()).getAttributes());
-                } else {
-                    if (pair.getRight().getLowerBound().equalsIgnoreCase("0") &&
-                            pair.getRight().getUpperBound().equalsIgnoreCase("1")) {
-                        //Special case
-                    } else {
-                        //Normal case
-                        if (entityMap.get(pair.getLeft()).getPrimaryKey() != null) {
-                            primaryKeys.add(entityMap.get(pair.getLeft()).getPrimaryKey());
-                            foreignKeys.add(new MutablePair<>(entityMap.get(pair.getLeft()).getPrimaryKey(),
-                                    pair.getLeft()));
-                        }
-                    }
+                    relationInfo.get(relation).get("MergeWith").add(pair.getLeft());
+                } else if (pair.getRight().getLowerBound().equalsIgnoreCase("0") &&
+                        pair.getRight().getUpperBound().equalsIgnoreCase("1")) {
+                    //Special case
+                    relationInfo.get(relation).get("PrimaryKeyException").add(pair.getLeft());
                 }
-
             }
-
-            relationTables.put(relationMap.get(relation).getName(), new Table(relation, attributes, primaryKeys, foreignKeys));
         }
+
     }
-
-
 }
+
+
