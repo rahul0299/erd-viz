@@ -28,23 +28,101 @@ public class RestEndpoints {
 
     @GetMapping("/toSQL")
     public String toSQL(String erData) {
-        return conversionService.handleErToSQL("{ \"class\": \"GraphLinksModel\",\n" +
+        return conversionService.handleErToSQL("{\n" +
                 "  \"nodeDataArray\": [\n" +
-                "{\"text\":\"Entity A\",\"key\":\"e1\",\"loc\":\"-270 -140\",\"color\":\"black\",\"fill\":\"white\",\"figure\":\"Rectangle\",\"thickness\":3,\"size\":\"150 80\"},\n" +
-                "{\"text\":\"Entity B\",\"key\":\"e2\",\"loc\":\"250 -140\",\"color\":\"black\",\"fill\":\"white\",\"figure\":\"Rectangle\",\"thickness\":3,\"size\":\"150 80\"},\n" +
-                "{\"text\":\"Relationship AB\",\"key\":\"r1\",\"loc\":\"-20 -140\",\"color\":\"black\",\"fill\":\"white\",\"figure\":\"Diamond\",\"thickness\":3,\"size\":\"160 80\"},\n" +
-                "{\"text\":\"A3\",\"key\":\"a2\",\"loc\":\"-220 70\",\"color\":\"black\",\"fill\":\"white\",\"figure\":\"Circle\",\"thickness\":3,\"size\":\"20 20\"},\n" +
-                "{\"text\":\"A1\",\"key\":\"a4\",\"loc\":\"250 50\",\"color\":\"black\",\"fill\":\"black\",\"figure\":\"Circle\",\"thickness\":3,\"size\":\"20 20\"},\n" +
-                "{\"text\":\"A1\",\"key\":\"a22\",\"loc\":\"-320 70\",\"color\":\"black\",\"fill\":\"white\",\"figure\":\"Circle\",\"thickness\":3,\"size\":\"40 40\"},\n" +
-                "{\"text\":\"A2\",\"key\":\"a222\",\"loc\":\"-270 70\",\"color\":\"black\",\"fill\":\"white\",\"figure\":\"Circle\",\"thickness\":3,\"size\":\"40 40\"}\n" +
-                "],\n" +
+                "    {\n" +
+                "      \"key\": \"583f\",\n" +
+                "      \"name\": \"Person\",\n" +
+                "      \"color\": \"white\",\n" +
+                "      \"loc\": \"-435.01666259765625 -177.5\",\n" +
+                "      \"category\": \"entity\",\n" +
+                "      \"primaryKey\": \"55f6\",\n" +
+                "      \"attributes\": [\n" +
+                "        \"55f6\",\n" +
+                "        \"2234\"\n" +
+                "      ]\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"key\": \"0293\",\n" +
+                "      \"name\": \"WorksFor\",\n" +
+                "      \"color\": \"white\",\n" +
+                "      \"loc\": \"-69.01666259765625 -196.5\",\n" +
+                "      \"category\": \"relation\",\n" +
+                "      \"attributes\": [\n" +
+                "        \"e04d\",\n" +
+                "        \"8b18\"\n" +
+                "      ],\n" +
+                "      \"primaryKey\": \"e04d\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"key\": \"55f6\",\n" +
+                "      \"category\": \"attribute\",\n" +
+                "      \"loc\": \"-449.8309873353578 -31.786722505910433\",\n" +
+                "      \"fill\": \"lightblue\",\n" +
+                "      \"isPrimary\": false,\n" +
+                "      \"isUnique\": true,\n" +
+                "      \"isNullable\": false,\n" +
+                "      \"type\": \"varchar\",\n" +
+                "      \"name\": \"id\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"key\": \"2234\",\n" +
+                "      \"category\": \"attribute\",\n" +
+                "      \"loc\": \"-454.6968967478971 -68.19835416957835\",\n" +
+                "      \"fill\": \"transparent\",\n" +
+                "      \"isPrimary\": false,\n" +
+                "      \"isUnique\": false,\n" +
+                "      \"isNullable\": true,\n" +
+                "      \"type\": \"varchar\",\n" +
+                "      \"name\": \"address\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"key\": \"e04d\",\n" +
+                "      \"category\": \"attribute\",\n" +
+                "      \"loc\": \"-126.3634204519862 75.18623029735514\",\n" +
+                "      \"fill\": \"lightblue\",\n" +
+                "      \"isPrimary\": false,\n" +
+                "      \"isUnique\": true,\n" +
+                "      \"isNullable\": false,\n" +
+                "      \"type\": \"varchar\",\n" +
+                "      \"name\": \"contract\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"key\": \"8b18\",\n" +
+                "      \"category\": \"attribute\",\n" +
+                "      \"loc\": \"-115.29836974274151 93.57743774925575\",\n" +
+                "      \"fill\": \"transparent\",\n" +
+                "      \"isPrimary\": false,\n" +
+                "      \"isUnique\": false,\n" +
+                "      \"isNullable\": true,\n" +
+                "      \"type\": \"varchar\",\n" +
+                "      \"name\": \"att\"\n" +
+                "    }\n" +
+                "  ],\n" +
                 "  \"linkDataArray\": [\n" +
-                "{\"from\":\"e1\",\"to\":\"r1\",\"text\":\"(0,n)\",\"dir\":0,\"points\":[-195,-140,-185,-140,-147.5,-140,-147.5,-140,-110,-140,-100,-140]},\n" +
-                "{\"from\":\"e2\",\"to\":\"r1\",\"text\":\"(0,n)\",\"dir\":0,\"points\":[175,-140,165,-140,117.5,-140,117.5,-140,70,-140,60,-140]},\n" +
-                "{\"from\":\"e1\",\"to\":\"a2\",\"dir\":0,\"points\":[-232.5,-100,-232.5,-90,-232.5,-93.37109375,-220.1484375,-93.37109375,-220.1484375,-78.92578125,-220.009765625,-78.92578125,-220.009765625,40,-220,50]},\n" +
-                "{\"from\":\"e2\",\"to\":\"a4\",\"dir\":0,\"points\":[250,-100,250,-90,250,-35,250,-35,250,20,250,30]},\n" +
-                "{\"from\":\"e1\",\"to\":\"a22\",\"points\":[-320,0,-320,10,-320,25,-320,25,-320,40,-320,50],\"dir\":0},\n" +
-                "{\"from\":\"e1\",\"to\":\"a222\",\"points\":[-270,0,-270,10,-270,25,-270,25,-270,40,-270,50],\"dir\":0}\n" +
-                "]}");
+                "    {\n" +
+                "      \"from\": \"583f\",\n" +
+                "      \"to\": \"55f6\",\n" +
+                "      \"key\": \"7316\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"from\": \"583f\",\n" +
+                "      \"to\": \"2234\",\n" +
+                "      \"key\": \"f7cd\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"from\": \"0293\",\n" +
+                "      \"to\": \"e04d\",\n" +
+                "      \"key\": \"6d5d\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"from\": \"0293\",\n" +
+                "      \"to\": \"8b18\",\n" +
+                "      \"key\": \"f6e7\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"selectedData\": null,\n" +
+                "  \"skipsDiagramUpdate\": false\n" +
+                "}");
     }
 }

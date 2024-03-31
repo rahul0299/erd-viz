@@ -5,9 +5,8 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class Relation extends Structure implements Node {
+public class Relation extends  Node {
 
-    String name;
 
     public Relation(String name) {
         this.name = name;

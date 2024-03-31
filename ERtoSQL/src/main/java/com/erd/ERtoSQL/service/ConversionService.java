@@ -17,14 +17,15 @@ public class ConversionService {
     HashMap<String, List<String>> linksMap;
     HashMap<String, Node> nodesMap;
 
+    HashMap<String, Attribute> attributesMap;
 
 
     public String handleErToSQL(String erData) {
         JSONObject jsonObject = new JSONObject(erData);
 
-        nodesMap = constructNodeMap(jsonObject.getJSONArray("nodeDataArray"));
+        constructNodeMap(jsonObject.getJSONArray("nodeDataArray"));
 
-        linksMap = constructLinksMap(jsonObject.getJSONArray("linkDataArray"));
+//        linksMap = constructLinksMap(jsonObject.getJSONArray("linkDataArray"));
 
         addAttributes();
 
@@ -32,7 +33,7 @@ public class ConversionService {
     }
 
     //Construct map of the keys of the elements and their direct links
-    public  HashMap<String, List<String>> constructLinksMap(JSONArray linksArray) {
+    public HashMap<String, List<String>> constructLinksMap(JSONArray linksArray) {
         HashMap<String, List<String>> linksMap = new HashMap<>();
         for (int i = 0; i < linksArray.length(); i++) {
             linksMap.computeIfAbsent(linksArray.getJSONObject(i).getString("from"),
@@ -43,39 +44,42 @@ public class ConversionService {
         return linksMap;
     }
 
-    public  HashMap<String, Node> constructNodeMap(JSONArray nodes) {
-        HashMap<String, Node> nodesMap = new HashMap<>();
+    public void constructNodeMap(JSONArray nodes) {
+        nodesMap = new HashMap<>();
+        attributesMap = new HashMap<>();
         for (int i = 0; i < nodes.length(); i++) {
-            if ("Rectangle".equalsIgnoreCase(nodes.getJSONObject(i).get("figure").toString())) {
-                nodesMap.put(nodes.getJSONObject(i).get("key").toString(), new Entity(nodes.getJSONObject(i).get("key").toString()));
-            } else if ("Diamond".equalsIgnoreCase(nodes.getJSONObject(i).get("figure").toString())) {
-                nodesMap.put(nodes.getJSONObject(i).get("key").toString(), new Relation(nodes.getJSONObject(i).get("key").toString()));
-            } else if ("Circle".equalsIgnoreCase(nodes.getJSONObject(i).get("figure").toString())) {
-                nodesMap.put(nodes.getJSONObject(i).get("key").toString(), new Attribute(nodes.getJSONObject(i).get("key").toString()));
+            if ("entity".equalsIgnoreCase(nodes.getJSONObject(i).get("category").toString())) {
+                nodesMap.put(nodes.getJSONObject(i).get("key").toString(),
+                        new Entity(nodes.getJSONObject(i).get("key").toString(),
+                        nodes.getJSONObject(i).get("primaryKey").toString(),nodes.getJSONObject(i).getJSONArray("attributes").toList()));
+            } else if ("relation".equalsIgnoreCase(nodes.getJSONObject(i).get("category").toString())) {
+                nodesMap.put(nodes.getJSONObject(i).get("key").toString(),
+                        new Relation(nodes.getJSONObject(i).get("key").toString()));
+            } else if ("attribute".equalsIgnoreCase(nodes.getJSONObject(i).get("category").toString())) {
+                attributesMap.put(nodes.getJSONObject(i).get("key").toString(),
+                        new Attribute(nodes.getJSONObject(i).get("key").toString()));
             }
 
         }
-        return nodesMap;
+
     }
 
-    public  void addAttributes() {
-        for (String element : linksMap.keySet()) {
+    public void addAttributes() {
+        for (String element : nodesMap.keySet()) {
 
-            if (nodesMap.get(element) instanceof Structure) {
-
-                for (String connectedElement : linksMap.get(element)) {
-                    if (nodesMap.get(connectedElement) instanceof Attribute) {
-                        ((Structure) nodesMap.get(element)).addToAttributes((Attribute) nodesMap.get(connectedElement));
-                    }
+            for (String connectedElement : linksMap.get(element)) {
+                if (nodesMap.get(connectedElement) instanceof Attribute) {
+                    (nodesMap.get(element)).addToAttributes((Attribute) nodesMap.get(connectedElement));
                 }
             }
 
+
         }
     }
 
-    public void removeAttributesFromMap(){
-        for(String i : nodesMap.keySet()){
-            if(nodesMap.get(i) instanceof Attribute){
+    public void removeAttributesFromMap() {
+        for (String i : nodesMap.keySet()) {
+            if (nodesMap.get(i) instanceof Attribute) {
                 linksMap.remove(i);
             }
         }
