@@ -8,6 +8,7 @@ import java.util.List;
 public class Relation extends  Node {
 
 
+
     public Relation(String name, String primaryKey, List<Object> attributes) {
         super(name,primaryKey,attributes);
     }
