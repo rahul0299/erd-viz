@@ -1,4 +1,3 @@
-import {useState} from "react";
 import {
     Card,
     CardContent,
@@ -103,7 +102,12 @@ const Editor = (props) => {
                     })
                 }
                 <ListItem>
-                    <ListItemButton onClick={() => props.handleAddAttribute(props.data.key, props.data.category)}><IconButton><Add /></IconButton></ListItemButton>
+                    {/* eslint-disable-next-line react/prop-types */}
+                    <ListItemButton onClick={() => props.handleAddAttribute(props.data.key, props.data.category)}>
+                        <IconButton>
+                            <Add />
+                        </IconButton>
+                    </ListItemButton>
                 </ListItem>
             </List>
             <Divider />

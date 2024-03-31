@@ -113,13 +113,14 @@ const DiagramWrapper = () => {
             }
 
             if (removedNodeKeys) {
-
-                narr = narr.filter(nd => {
-                    if (removedNodeKeys.includes(nd.key)) {
-                        return false;
+                console.log("remove " + removedNodeKeys)
+                removedNodeKeys.forEach(rmKey => {
+                    const rmIdx = mapNodeKeyIdx.current.get(rmKey);
+                    const rmNode = newState.nodeDataArray[rmIdx];
+                    if (rmNode !== undefined && (rmNode.category === "entity" || rmNode.category === "relation")) {
+                        narr = narr.filter(nd => nd.key !== rmKey && !rmNode.attributes.includes(nd.key));
                     }
-                    return true;
-                });
+                })
                 newState.nodeDataArray = narr;
                 refreshNodeIndex(narr);
             }
@@ -163,7 +164,7 @@ const DiagramWrapper = () => {
                 newState.modelData = modifiedModelData;
             }
 
-            // newState.skipsDiagramUpdate = true;
+            newState.skipsDiagramUpdate = true;
             return newState;
         })
     }
@@ -260,7 +261,6 @@ const DiagramWrapper = () => {
                 });
             }
 
-            console.log(data);
             return data;
         }
 
