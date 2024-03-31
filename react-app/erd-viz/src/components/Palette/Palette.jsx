@@ -68,8 +68,8 @@ const Palette = () => {
         initPalette={initPalette}
         divClassName='palette-component'
         nodeDataArray={[
-            { key: 0, name: 'Entity', color: 'white', loc: '0 0', category: "entity", primaryKey: null },
-            { key: 1, name: 'Relation', color: 'white', loc: '200 0', category: "relation" },
+            { key: 0, name: 'Entity', color: 'white', loc: '0 0', category: "entity", primaryKey: null, attributes: [] },
+            { key: 1, name: 'Relation', color: 'white', loc: '200 0', category: "relation", attributes: [] },
         ]}
     />
 }
