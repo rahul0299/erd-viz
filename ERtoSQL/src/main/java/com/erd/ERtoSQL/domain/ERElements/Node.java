@@ -1,9 +1,12 @@
 package com.erd.ERtoSQL.domain.ERElements;
 
+import lombok.Data;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Data
 public abstract class Node {
     List<String> attributes;
 

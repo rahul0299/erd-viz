@@ -3,21 +3,21 @@ package com.erd.ERtoSQL.domain.ERElements;
 import lombok.Data;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Data
-public class Entity  extends Node {
+public class Entity extends Node {
 
 
-    Boolean isWeak;
+    Boolean isWeak = false;
+    String mergeWith;
 
     public Entity(String name, String primaryKey, List<Object> attributes) {
-        super(name,primaryKey,attributes);
+        super(name, primaryKey, attributes);
 
     }
 
-    public Entity(){
+    public Entity() {
         super();
     }
 }
