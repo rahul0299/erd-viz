@@ -31,7 +31,7 @@ public class ConversionService {
     private final String primaryKeyException = "PrimaryKeyException";
     private final String attachedToEntities = "AttachedToEntities";
 
-    private final String normalCase = "NormalCase";
+    private final String notMergingCase = "NotMergingCase";
 
 
     public String handleErToSQL(String erData) {
@@ -115,7 +115,7 @@ public class ConversionService {
             relationInfo.get(relation).put(mergeWithWeak, new ArrayList<>());
             relationInfo.get(relation).put(primaryKeyException, new ArrayList<>());
             relationInfo.get(relation).put(attachedToEntities, new ArrayList<>());
-            relationInfo.get(relation).put(normalCase, new ArrayList<>());
+            relationInfo.get(relation).put(notMergingCase, new ArrayList<>());
 
 
             for (MutablePair<String, Link> pair : linksMap.get(relation)) {
@@ -136,10 +136,10 @@ public class ConversionService {
                         pair.getRight().getUpperBound().equalsIgnoreCase("1")) {
                     //Special case
                     relationInfo.get(relation).get(primaryKeyException).add(pair.getLeft());
-                    relationInfo.get(relation).get(normalCase).add(pair.getLeft());
+                    relationInfo.get(relation).get(notMergingCase).add(pair.getLeft());
                 }
                 else{
-                    relationInfo.get(relation).get(normalCase).add(pair.getLeft());
+                    relationInfo.get(relation).get(notMergingCase).add(pair.getLeft());
                 }
             }
         }
@@ -175,7 +175,7 @@ public class ConversionService {
                 //Add key of table not in merge relation but in attached
                 List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
 
-                for(String entityKey : relationInfo.get(relationKey).get(normalCase)){
+                for(String entityKey : relationInfo.get(relationKey).get(notMergingCase)){
                     foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(),entityMap.get(entityKey).getName()));
                     attributes.addAll(entityMap.get(entityKey).getAttributes());
                 }
