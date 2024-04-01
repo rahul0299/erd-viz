@@ -33,7 +33,7 @@ public class ConversionService {
     private final String primaryKeyException = "PrimaryKeyException";
     private final String attachedToEntities = "AttachedToEntities";
 
-    private final String notMergingCase = "NotMergingCase";
+    private final String notSpecialCase = "NotSpecialCase";
 
 
     public List<String> handleErToSQL(String erData) {
@@ -119,7 +119,7 @@ public class ConversionService {
             relationInfo.get(relation).put(mergeWithWeak, new ArrayList<>());
             relationInfo.get(relation).put(primaryKeyException, new ArrayList<>());
             relationInfo.get(relation).put(attachedToEntities, new ArrayList<>());
-            relationInfo.get(relation).put(notMergingCase, new ArrayList<>());
+            relationInfo.get(relation).put(notSpecialCase, new ArrayList<>());
 
 
             for (MutablePair<String, Link> pair : linksMap.get(relation)) {
@@ -140,9 +140,8 @@ public class ConversionService {
                         pair.getRight().getUpperBound().equalsIgnoreCase("1")) {
                     //Special case
                     relationInfo.get(relation).get(primaryKeyException).add(pair.getLeft());
-                    relationInfo.get(relation).get(notMergingCase).add(pair.getLeft());
                 } else {
-                    relationInfo.get(relation).get(notMergingCase).add(pair.getLeft());
+                    relationInfo.get(relation).get(notSpecialCase).add(pair.getLeft());
                 }
             }
         }
@@ -177,7 +176,7 @@ public class ConversionService {
                 //Add key of table not in merge relation but in attached
                 List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
 
-                for (String entityKey : relationInfo.get(relationKey).get(notMergingCase)) {
+                for (String entityKey : relationInfo.get(relationKey).get(notSpecialCase)) {
                     foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(), entityKey));
                     attributes.addAll(entityMap.get(entityKey).getAttributes());
                 }
@@ -201,6 +200,7 @@ public class ConversionService {
                 if (finalMergeWith == null) {
                     tablesCreated.put(relationInfo.get(relationKey).get(mergeWith).get(0), new Table(name, attributes, primaryKey, foreignKeys));
                     relationInfo.get(relationKey).get(mergeWith).forEach(t -> entityMap.get(t).setTableCreated(relationInfo.get(relationKey).get(mergeWith).get(0)));
+                    currentRelation.setTableCreated(relationInfo.get(relationKey).get(mergeWith).get(0));
                 } else {
                     //Add it to finalMergeWith
                     Table currentTable = tablesCreated.get(finalMergeWith);
@@ -211,15 +211,53 @@ public class ConversionService {
                     for(String i: relationInfo.get(relationKey).get(mergeWith)){
                         entityMap.get(i).setTableCreated(finalMergeWith);
                     }
+                    currentRelation.setTableCreated(finalMergeWith);
                 }
             }
 
         }
 
+        for (String relationKey : relationMap.keySet()){
+            if(relationInfo.get(relationKey).get(primaryKeyException).isEmpty()){
+                continue;
+            }
+
+            Relation currentRelation = relationMap.get(relationKey);
+
+            if(currentRelation.getTableCreated()!=null){
+                //Means relationship is merged with some other entities as well
+            }
+            else{
+                String name = currentRelation.getName();
+                List<String> attributes = new ArrayList<>(currentRelation.getAttributes());
+                List<String> primaryKey = new ArrayList<>();
+                List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
+                for(String attachedEntitiesReference : relationInfo.get(relationKey).get(attachedToEntities)){
+                    if(relationInfo.get(relationKey).get(primaryKeyException).contains(attachedEntitiesReference)){
+                        for(String attr : entityMap.get(attachedEntitiesReference).getAttributes()){
+                            if(attr.equalsIgnoreCase(entityMap.get(attachedEntitiesReference).getPrimaryKey())){
+                                attributesMap.get(attr).setIsUnique(true);
+                            }
+                            attributes.add(attr);
+                        }
+                    }
+                    else{
+                        attributes.addAll(entityMap.get(attachedEntitiesReference).getAttributes());
+                    }
+                    primaryKey.add(entityMap.get(attachedEntitiesReference).getPrimaryKey());
+                    foreignKeys.add(new MutablePair<>(entityMap.get(attachedEntitiesReference).getPrimaryKey(), attachedEntitiesReference));
+                }
+
+                tablesCreated.put(relationKey,new Table(currentRelation.getName(),attributes,primaryKey,foreignKeys));
+                currentRelation.setTableCreated(relationKey);
+            }
+        }
+
+
+
         //Normal case of relations
         for (String relationKey : relationMap.keySet()) {
-            if (!relationInfo.get(relationKey).get(mergeWith).isEmpty() ||
-                    !relationInfo.get(relationKey).get(mergeWithWeak).isEmpty()) {
+            if (relationMap.get(relationKey).getTableCreated()!=null) {
                 continue;
             }
 

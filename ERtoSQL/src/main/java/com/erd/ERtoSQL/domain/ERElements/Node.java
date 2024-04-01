@@ -16,6 +16,9 @@ public abstract class Node {
 
     List<Link> links;
 
+    // Lets you know if it has already been merged with some table created and the reference of that table
+    String tableCreated;
+
     public Node(String name, String primaryKey, List<Object> attributes) {
         this.name = name;
         this.primaryKey = primaryKey;
