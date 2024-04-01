@@ -24,7 +24,9 @@ public class ConversionService {
 
     HashMap<String, HashMap<String, List<String>>> relationInfo = new HashMap<>();
 
-    HashMap<String,Table> tablesCreated = new HashMap<>();
+    HashMap<String, Table> tablesCreated = new HashMap<>();
+
+    List<String> sqlStatements = new ArrayList<>();
 
     private final String mergeWith = "MergeWith";
     private final String mergeWithWeak = "MergeWithWeak";
@@ -44,6 +46,8 @@ public class ConversionService {
         findInfoForRelations();
 
         iterateOverNodesToCreateTables();
+
+        generateSQL();
 
         return entityMap.toString();
     }
@@ -137,8 +141,7 @@ public class ConversionService {
                     //Special case
                     relationInfo.get(relation).get(primaryKeyException).add(pair.getLeft());
                     relationInfo.get(relation).get(notMergingCase).add(pair.getLeft());
-                }
-                else{
+                } else {
                     relationInfo.get(relation).get(notMergingCase).add(pair.getLeft());
                 }
             }
@@ -146,28 +149,27 @@ public class ConversionService {
 
     }
 
-    private void iterateOverNodesToCreateTables(){
-        for(String entityKey: entityMap.keySet()){
-            if(entityMap.get(entityKey).getMergeWith()!=null){
+    private void iterateOverNodesToCreateTables() {
+        for (String entityKey : entityMap.keySet()) {
+            if (entityMap.get(entityKey).getMergeWith() != null) {
                 continue;
             }
 
             Entity currentEntity = entityMap.get(entityKey);
             //create table
-            tablesCreated.put(entityKey,new Table(currentEntity.getName(),currentEntity.getAttributes()
-                    , Arrays.asList(currentEntity.getPrimaryKey()),null));
+            tablesCreated.put(entityKey, new Table(currentEntity.getName(), currentEntity.getAttributes()
+                    , Arrays.asList(currentEntity.getPrimaryKey()), null));
 
             currentEntity.setTableCreated(entityKey);
         }
 
-        for(String relationKey: relationMap.keySet()){
-            if(relationInfo.get(relationKey).get(mergeWith).isEmpty() &&
-                    relationInfo.get(relationKey).get(mergeWithWeak).isEmpty()){
+        for (String relationKey : relationMap.keySet()) {
+            if (relationInfo.get(relationKey).get(mergeWith).isEmpty() &&
+                    relationInfo.get(relationKey).get(mergeWithWeak).isEmpty()) {
                 continue;
             }
 
-            if(!relationInfo.get(relationKey).get(mergeWith).isEmpty()){
-                Table table;
+            if (!relationInfo.get(relationKey).get(mergeWith).isEmpty()) {
                 Relation currentRelation = relationMap.get(relationKey);
                 String name = currentRelation.getName();
                 List<String> attributes = new ArrayList<>(currentRelation.getAttributes());
@@ -175,51 +177,119 @@ public class ConversionService {
                 //Add key of table not in merge relation but in attached
                 List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
 
-                for(String entityKey : relationInfo.get(relationKey).get(notMergingCase)){
-                    foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(),entityMap.get(entityKey).getName()));
+                for (String entityKey : relationInfo.get(relationKey).get(notMergingCase)) {
+                    foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(), entityKey));
                     attributes.addAll(entityMap.get(entityKey).getAttributes());
                 }
 
                 //R table ready
-                String finalMergeWith=null;
-                for(String entityKey: relationInfo.get(relationKey).get(mergeWith)){
-                    if(entityMap.get(entityKey).getTableCreated()!=null){
+                String finalMergeWith = null;
+                for (String entityKey : relationInfo.get(relationKey).get(mergeWith)) {
+                    if (entityMap.get(entityKey).getTableCreated() != null) {
                         //Merge with table with reference entityKey in tablesCreated
                         //Ignore
                         finalMergeWith = entityMap.get(entityKey).getTableCreated();
-                    }
-                    else{
+                    } else {
                         //Merge with entity directly and keep merging with other entities and put it finally in tablesCreated
                         Entity currentEntity = entityMap.get(entityKey);
-                        name = currentEntity.getName() + "_"+name;
+                        name = currentEntity.getName() + "_" + name;
                         attributes.addAll(currentEntity.getAttributes());
                         primaryKey.add(currentEntity.getPrimaryKey());
 
                     }
                 }
-                if(finalMergeWith==null){
-                    tablesCreated.put(relationInfo.get(relationKey).get(mergeWith).get(0),new Table(name,attributes,primaryKey,foreignKeys));
-                    relationInfo.get(relationKey).get(mergeWith).forEach(t-> entityMap.get(t).setTableCreated(relationInfo.get(relationKey).get(mergeWith).get(0)));
-                }
-                else{
+                if (finalMergeWith == null) {
+                    tablesCreated.put(relationInfo.get(relationKey).get(mergeWith).get(0), new Table(name, attributes, primaryKey, foreignKeys));
+                    relationInfo.get(relationKey).get(mergeWith).forEach(t -> entityMap.get(t).setTableCreated(relationInfo.get(relationKey).get(mergeWith).get(0)));
+                } else {
                     //Add it to finalMergeWith
                     Table currentTable = tablesCreated.get(finalMergeWith);
-                    currentTable.setName(currentTable.getName()+name);
+                    currentTable.setName(currentTable.getName() + name);
                     currentTable.getAttributes().addAll(attributes);
                     currentTable.getPrimaryKey().addAll(primaryKey);
                     currentTable.getForeignKeys().addAll(foreignKeys);
+                    for(String i: relationInfo.get(relationKey).get(mergeWith)){
+                        entityMap.get(i).setTableCreated(finalMergeWith);
+                    }
                 }
             }
 
         }
 
-        for(String relationKey: relationMap.keySet()){
-            if(!relationInfo.get(relationKey).get(mergeWith).isEmpty() ||
-                    !relationInfo.get(relationKey).get(mergeWithWeak).isEmpty()){
+        //Normal case of relations
+        for (String relationKey : relationMap.keySet()) {
+            if (!relationInfo.get(relationKey).get(mergeWith).isEmpty() ||
+                    !relationInfo.get(relationKey).get(mergeWithWeak).isEmpty()) {
                 continue;
             }
 
-            //Create table
+            Relation currentRelation = relationMap.get(relationKey);
+
+
+            List<String> attributes = new ArrayList<>(currentRelation.getAttributes());
+            List<String> primaryKeys = new ArrayList<>();
+            List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
+
+            for (String entityKey : relationInfo.get(relationKey).get(attachedToEntities)) {
+                foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(), entityKey));
+                primaryKeys.add(entityMap.get(entityKey).getPrimaryKey());
+                attributes.addAll(entityMap.get(entityKey).getAttributes());
+            }
+            tablesCreated.put(relationKey, new Table(currentRelation.getName(), attributes
+                    , primaryKeys, foreignKeys));
+
+        }
+    }
+
+    private void generateSQL() {
+        for (String tableReference : tablesCreated.keySet()) {
+            String sql = "CREATE TABLE " + tablesCreated.get(tableReference).getName() + " (";
+
+            //Adding attributes
+            for (String attributeReference : tablesCreated.get(tableReference).getAttributes()) {
+
+                Attribute currentAttribute = attributesMap.get(attributeReference);
+                sql += "\n" + currentAttribute.getName() + " " + currentAttribute.getDataType();
+
+                if (currentAttribute.getIsUnique()) {
+                    sql += " UNIQUE ";
+                }
+
+                if (!currentAttribute.getIsNullable()){
+                    sql += " NOT NULL";
+                }
+                sql+=",";
+
+            }
+
+            if(tablesCreated.get(tableReference).getPrimaryKey()!=null && !tablesCreated.get(tableReference).getPrimaryKey().isEmpty()){
+                sql+="\nPRIMARY KEY (";
+                for (String primaryKeyReference : tablesCreated.get(tableReference).getPrimaryKey()){
+                    sql+= " "+attributesMap.get(primaryKeyReference).getName()+",";
+                }
+                sql = sql.substring(0,sql.length()-1);
+                sql+=" ),";
+
+            }
+
+            if(tablesCreated.get(tableReference).getForeignKeys()!=null && !tablesCreated.get(tableReference).getForeignKeys().isEmpty()){
+                String foreign="";
+                for(MutablePair<String, String> foreignKeyReference :
+                        tablesCreated.get(tableReference).getForeignKeys()){
+                    foreign="\nFOREIGN KEY ("+attributesMap.get(foreignKeyReference.getLeft()).getName()+") REFERENCES "+
+                            tablesCreated.get(entityMap.get(foreignKeyReference.getRight()).getTableCreated()).getName()
+                            +" ("+attributesMap.get(foreignKeyReference.getLeft()).getName()+"),";
+                    sql+=foreign;
+                }
+                sql = sql.substring(0,sql.length()-1);
+            }
+
+            if(sql.charAt(sql.length()-1)==','){
+                sql = sql.substring(0,sql.length()-1);
+            }
+
+            sql+= ");";
+            sqlStatements.add(sql);
         }
     }
 }

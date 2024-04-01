@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class RestEndpoints {
 
-    Gson gson = new Gson();
-
     @Autowired
     ConversionService conversionService;
 
