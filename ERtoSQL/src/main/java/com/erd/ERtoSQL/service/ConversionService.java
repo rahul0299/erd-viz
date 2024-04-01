@@ -36,7 +36,7 @@ public class ConversionService {
     private final String notMergingCase = "NotMergingCase";
 
 
-    public String handleErToSQL(String erData) {
+    public List<String> handleErToSQL(String erData) {
         JSONObject jsonObject = new JSONObject(erData);
 
         constructNodeMap(jsonObject.getJSONArray("nodeDataArray"));
@@ -49,7 +49,7 @@ public class ConversionService {
 
         generateSQL();
 
-        return entityMap.toString();
+        return sqlStatements;
     }
 
     //Construct map of the keys of the elements and their direct links
