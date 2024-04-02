@@ -28,19 +28,15 @@ const Editor = (props) => {
                 props.handlePropertyChange(props.data.primaryKey, { "fill": "transparent" });
             }
             props.handlePropertyChange(props.data.key, { "primaryKey": newKey });
-            props.handlePropertyChange(newKey, { "isNullable": false, "isUnique": true, "fill": "lightblue" });
+            props.handlePropertyChange(newKey, { "fill": "lightblue" });
         }
     }
 
     const toggleNullableAndUnique = (key, property, value) => {
-        if (key === props.data.primaryKey) {
-            props.handlePropertyChange(key, { "isNullable": false, "isUnique": true });
+        if (property === "isUnique") {
+            props.handlePropertyChange(key, { "isUnique": value });
         } else {
-            if (property === "isUnique") {
-                props.handlePropertyChange(key, { "isUnique": value });
-            } else {
-                props.handlePropertyChange(key, { "isNullable": value });
-            }
+            props.handlePropertyChange(key, { "isNullable": value });
         }
     }
 
