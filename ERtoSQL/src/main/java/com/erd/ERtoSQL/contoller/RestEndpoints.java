@@ -2,6 +2,7 @@ package com.erd.ERtoSQL.contoller;
 
 import com.erd.ERtoSQL.service.ConversionService;
 import com.google.gson.*;
+import jakarta.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,11 @@ public class RestEndpoints {
 
 
     @PostMapping("/toSQL")
-    public @ResponseBody String toSQL(@RequestBody String erData) {
+    public @ResponseBody String toSQL(@RequestBody String erData, HttpServletResponse response) {
         JsonElement result = gson.toJsonTree(conversionService.handleErToSQL(erData));
         JsonObject jsonObject = new JsonObject();
         jsonObject.add("sql",result);
+        response.addHeader("Access-Control-Allow-Origin","*");
         return gson.toJson(jsonObject);
     }
 }

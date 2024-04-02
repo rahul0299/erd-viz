@@ -78,6 +78,9 @@ public class ConversionService {
         entityMap = new HashMap<>();
         relationMap = new HashMap<>();
         attributesMap = new HashMap<>();
+        relationInfo = new HashMap<>();
+        tablesCreated=new HashMap<>();
+        sqlStatements=new ArrayList<>();
         for (int i = 0; i < nodes.length(); i++) {
             if ("entity".equalsIgnoreCase(nodes.getJSONObject(i).get("category").toString())) {
 
@@ -229,6 +232,16 @@ public class ConversionService {
 
             if(currentRelation.getTableCreated()!=null){
                 //Means relationship is merged with some other entities as well
+                //Have to just add the
+                Table currentTable = tablesCreated.get(currentRelation.getTableCreated());
+                for(String i: relationInfo.get(relationKey).get(primaryKeyException)){
+                    Entity entity = entityMap.get(i);
+                    attributesMap.get(entity.getPrimaryKey()).setIsUnique(true);
+                    currentTable.getPrimaryKey().add(entity.getPrimaryKey());
+                    currentTable.getAttributes().add(entity.getPrimaryKey());
+                }
+
+
             }
             else{
                 String name = currentRelation.getName();
@@ -237,15 +250,11 @@ public class ConversionService {
                 List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
                 for(String attachedEntitiesReference : relationInfo.get(relationKey).get(attachedToEntities)){
                     if(relationInfo.get(relationKey).get(primaryKeyException).contains(attachedEntitiesReference)){
-                        for(String attr : entityMap.get(attachedEntitiesReference).getAttributes()){
-                            if(attr.equalsIgnoreCase(entityMap.get(attachedEntitiesReference).getPrimaryKey())){
-                                attributesMap.get(attr).setIsUnique(true);
-                            }
-                            attributes.add(attr);
-                        }
+                        attributesMap.get(entityMap.get(attachedEntitiesReference).getPrimaryKey()).setIsUnique(true);
+
                     }
                     else{
-                        attributes.addAll(entityMap.get(attachedEntitiesReference).getAttributes());
+                        attributes.add(entityMap.get(attachedEntitiesReference).getPrimaryKey());
                     }
                     primaryKey.add(entityMap.get(attachedEntitiesReference).getPrimaryKey());
                     foreignKeys.add(new MutablePair<>(entityMap.get(attachedEntitiesReference).getPrimaryKey(), attachedEntitiesReference));
