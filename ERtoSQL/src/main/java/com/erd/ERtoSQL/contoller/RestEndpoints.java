@@ -26,7 +26,7 @@ public class RestEndpoints {
         JsonElement result = gson.toJsonTree(conversionService.handleErToSQL(erData));
         JsonObject jsonObject = new JsonObject();
         jsonObject.add("sql",result);
-        response.addHeader("Access-Control-Allow-Origin","*");
+//        response.addHeader("Access-Control-Allow-Origin","*");
         return gson.toJson(jsonObject);
     }
 }
