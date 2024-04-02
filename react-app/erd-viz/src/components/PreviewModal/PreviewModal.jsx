@@ -48,7 +48,7 @@ const PreviewModal = (props) => {
     const saveContent = () => {
         if (content != null) {
             let str = "";
-            content.forEach(line => str += '\n' + line);
+            content.forEach(line => str += line + '\n\n');
             console.log(str)
             const blob = new Blob([str], {type: "text/plain;charset=utf-8"});
             saveAs(blob, 'schema.sql');
@@ -83,7 +83,10 @@ const PreviewModal = (props) => {
                     // eslint-disable-next-line react/prop-types
                     content
                         ?
-                        content.map(c => <Typography>{c}</Typography>)
+                        content.map(c => <>
+                            <Typography>{c}</Typography>
+                            <br />
+                        </>)
                         :
                         <Stack spacing={1}>
                             <Skeleton variant="rectangular" height={90} />
