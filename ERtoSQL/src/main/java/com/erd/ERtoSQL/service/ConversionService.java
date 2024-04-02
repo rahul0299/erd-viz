@@ -162,6 +162,7 @@ public class ConversionService {
             currentEntity.setTableCreated(entityKey);
         }
 
+        //Handles merge cases
         for (String relationKey : relationMap.keySet()) {
             if (relationInfo.get(relationKey).get(mergeWith).isEmpty() &&
                     relationInfo.get(relationKey).get(mergeWithWeak).isEmpty()) {
@@ -178,7 +179,7 @@ public class ConversionService {
 
                 for (String entityKey : relationInfo.get(relationKey).get(notSpecialCase)) {
                     foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(), entityKey));
-                    attributes.addAll(entityMap.get(entityKey).getAttributes());
+                    attributes.add(entityMap.get(entityKey).getPrimaryKey());
                 }
 
                 //R table ready
@@ -217,6 +218,8 @@ public class ConversionService {
 
         }
 
+
+        //Handles primary key exception case
         for (String relationKey : relationMap.keySet()){
             if(relationInfo.get(relationKey).get(primaryKeyException).isEmpty()){
                 continue;
@@ -271,7 +274,7 @@ public class ConversionService {
             for (String entityKey : relationInfo.get(relationKey).get(attachedToEntities)) {
                 foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(), entityKey));
                 primaryKeys.add(entityMap.get(entityKey).getPrimaryKey());
-                attributes.addAll(entityMap.get(entityKey).getAttributes());
+                attributes.add(entityMap.get(entityKey).getPrimaryKey());
             }
             tablesCreated.put(relationKey, new Table(currentRelation.getName(), attributes
                     , primaryKeys, foreignKeys));
