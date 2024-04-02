@@ -5,6 +5,10 @@ import { useRef, useState} from "react";
 import Diagram from "./Diagram/Diagram.jsx";
 import Editor from "./Editor/Editor.jsx";
 import JSONPretty from "react-json-pretty";
+import {Fab} from "@mui/material";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faCode} from "@fortawesome/free-solid-svg-icons";
+import PreviewModal from "./PreviewModal/PreviewModal.jsx";
 
 
 const DiagramWrapper = () => {
@@ -26,6 +30,16 @@ const DiagramWrapper = () => {
     }
 
     const [state, setState] = useState(getInitialState());
+
+    const [modalOpen, setModalOpen] = useState(false);
+
+    const closeModal = () => {
+        setModalOpen(false);
+    }
+
+    const onCodeButtonClick = () => {
+        setModalOpen(true);
+    }
 
     const mapNodeKeyIdx = useRef(new Map());
     const mapLinkKeyIdx = useRef(new Map());
@@ -310,6 +324,14 @@ const DiagramWrapper = () => {
                 />
             </div>
             : null }
+        <Fab
+            sx={{ position: "absolute", bottom: 40, right: 40}}
+            color="success"
+            onClick={() => setModalOpen(true)}
+        >
+            <FontAwesomeIcon icon={faCode} />
+        </Fab>
+        <PreviewModal open={modalOpen} model={state} onClose={closeModal}/>
     </>
 }
 
