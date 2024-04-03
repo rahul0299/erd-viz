@@ -7,10 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class ConversionService {
@@ -28,6 +25,8 @@ public class ConversionService {
 
     List<String> sqlStatements = new ArrayList<>();
 
+    Set<String> sqlSet = new LinkedHashSet<>();
+
     private final String mergeWith = "MergeWith";
     private final String mergeWithWeak = "MergeWithWeak";
     private final String primaryKeyException = "PrimaryKeyException";
@@ -37,7 +36,7 @@ public class ConversionService {
     private final String notMerging = "notMerging";
 
 
-    public List<String> handleErToSQL(String erData) {
+    public Set<String> handleErToSQL(String erData) {
         JSONObject jsonObject = new JSONObject(erData);
 
         constructNodeMap(jsonObject.getJSONArray("nodeDataArray"));
@@ -50,7 +49,9 @@ public class ConversionService {
 
         generateSQL();
 
-        return sqlStatements;
+        reorderSql();
+
+        return sqlSet;
     }
 
     //Construct map of the keys of the elements and their direct links
@@ -350,6 +351,15 @@ public class ConversionService {
             sql+= ");";
             sqlStatements.add(sql);
         }
+    }
+
+    private void reorderSql(){
+        for(String i : sqlStatements){
+            if(!i.contains("FOREIGN KEY")){
+                sqlSet.add(i);
+            }
+        }
+        sqlSet.addAll(sqlStatements);
     }
 }
 
