@@ -1,6 +1,7 @@
 import * as go from "gojs";
 import { ReactDiagram } from "gojs-react";
 import CustomModel from "../../models/CustomModel.jsx";
+import MultiNodePathLink, {invalidateLinkRoutes} from "../../models/MultiNodePathLink.jsx";
 
 const Diagram = (props) => {
   const initDiagram = () => {
@@ -35,6 +36,7 @@ const Diagram = (props) => {
       "undoManager.isEnabled": true,
       allowDrop: true,
       model: new CustomModel(),
+      "Changed": invalidateLinkRoutes,
     });
 
     diagram.grid = $(
@@ -145,6 +147,24 @@ const Diagram = (props) => {
       )
     );
 
+    const primaryKeyLabel = $(
+        go.Node, {
+          movable: false,
+          layerName: "Foreground"
+        },
+        $(go.Shape,
+            "Circle",
+            {
+                width: 25,
+                height: 25,
+                fill: "lightblue",
+                stroke: "black",
+                strokeWidth: 2,
+            },
+            new go.Binding("fill")
+        )
+    );
+
     const link = $(
       go.Link,
       { curve: go.Link.JumpOver },
@@ -190,13 +210,30 @@ const Diagram = (props) => {
         )
       )
     );
+
+    const multiNodeLink = $(MultiNodePathLink,  // subclass of Link, defined below
+          $(go.Shape, { strokeWidth: 2, },
+              new go.Binding("stroke", "color")),
+      );
+
     diagram.nodeTemplateMap = new go.Map();
     diagram.nodeTemplateMap.add("entity", entityNode);
     diagram.nodeTemplateMap.add("relation", relationNode);
     diagram.nodeTemplateMap.add("attribute", attributeNode);
+    diagram.nodeTemplateMap.add("primaryKeyLabel", primaryKeyLabel);
     diagram.linkTemplate = link;
+    diagram.linkTemplateMap.add("multiNodeLink", multiNodeLink);
     diagram.skipsDiagramUpdate = false;
     diagram.addDiagramListener("ChangedSelection", props.onDiagramEvent);
+    diagram.addModelChangedListener((e) => {
+        if (e.change === go.ChangedEvent.Property && e.propertyName === "path") {
+            const link = diagram.findLinkForData(e.object)
+
+            if (link instanceof MultiNodePathLink) {
+                link.invalidateRoute();
+            }
+        }
+    })
 
     return diagram;
   };

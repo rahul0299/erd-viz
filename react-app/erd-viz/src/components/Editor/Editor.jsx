@@ -20,14 +20,15 @@ const Editor = (props) => {
     const uniqueColor = "red";
 
     const changePrimaryKey = (newKey) => {
-        if (newKey === props.data.primaryKey) {
-            props.handlePropertyChange(props.data.key, { "primaryKey": null });
+        if (props.data.primaryKey.includes(newKey)) {
+            const idx = props.data.primaryKey.indexOf(newKey);
+            const newPrimary = [...props.data.primaryKey];
+            newPrimary.splice(idx, 1);
+            props.handlePropertyChange(props.handlePropertyChange(props.data.key, {"primaryKey": newPrimary}));
             props.handlePropertyChange(newKey, { "fill": "transparent" });
         } else {
-            if (props.data.primaryKey !== null){
-                props.handlePropertyChange(props.data.primaryKey, { "fill": "transparent" });
-            }
-            props.handlePropertyChange(props.data.key, { "primaryKey": newKey });
+            const newPrimary = [...props.data.primaryKey, newKey];
+            props.handlePropertyChange(props.handlePropertyChange(props.data.key, {"primaryKey": newPrimary}));
             props.handlePropertyChange(newKey, { "fill": "lightblue" });
         }
     }
@@ -83,7 +84,7 @@ const Editor = (props) => {
                                     <Close />
                                 </IconButton>
                             </>
-                        } sx={{ borderLeft: props.data.primaryKey === key ? "2px solid #9c27b0" : ""}}>
+                        } sx={{ borderLeft: props.data.primaryKey?.includes(key) ? "2px solid #9c27b0" : ""}}>
                             <TextField value={name}
                                        onChange={(e) => props.handlePropertyChange(key, { "name": e.target.value })}
                                        size="small"
@@ -91,8 +92,8 @@ const Editor = (props) => {
                             <Checkbox
                                 icon={<CircleOutlined sx={{ color: inActiveColor }}/>}
                                 checkedIcon={<Circle color="secondary"/>}
-                                checked={props.data.primaryKey === key}
-                                onClick={() => changePrimaryKey(key)}
+                                checked={props.data.primaryKey?.includes(key)}
+                                onClick={() => props.handlePrimaryKeyChange(props.data.key, key)}
                             />
                         </ListItem>
                     })
