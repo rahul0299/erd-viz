@@ -1,0 +1,8 @@
+.diagram-component {
+    width: 100%;
+    height: 100%;
+    /*border: solid 1px black;*/
+    background-color: white;
+    position: relative;
+    z-index: 0;
+}
