@@ -251,7 +251,7 @@ public class ConversionService {
                 for(String attachedEntitiesReference : relationInfo.get(relationKey).get(attachedToEntities)){
                     if(relationInfo.get(relationKey).get(primaryKeyException).contains(attachedEntitiesReference)){
                         attributesMap.get(entityMap.get(attachedEntitiesReference).getPrimaryKey()).setIsUnique(true);
-
+                        attributes.add(entityMap.get(attachedEntitiesReference).getPrimaryKey());
                     }
                     else{
                         attributes.add(entityMap.get(attachedEntitiesReference).getPrimaryKey());
