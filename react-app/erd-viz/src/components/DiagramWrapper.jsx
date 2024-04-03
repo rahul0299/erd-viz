@@ -37,10 +37,6 @@ const DiagramWrapper = () => {
         setModalOpen(false);
     }
 
-    const onCodeButtonClick = () => {
-        setModalOpen(true);
-    }
-
     const mapNodeKeyIdx = useRef(new Map());
     const mapLinkKeyIdx = useRef(new Map());
 
@@ -127,7 +123,6 @@ const DiagramWrapper = () => {
             }
 
             if (removedNodeKeys) {
-                console.log("remove " + removedNodeKeys)
                 removedNodeKeys.forEach(rmKey => {
                     const rmIdx = mapNodeKeyIdx.current.get(rmKey);
                     const rmNode = newState.nodeDataArray[rmIdx];
@@ -203,7 +198,8 @@ const DiagramWrapper = () => {
             const newLink = {
                 from: node.key,
                 to: newNode.key,
-                key: generateUUID()
+                key: generateUUID(),
+                labelKeys: []
             }
 
             const nodeDataArray = [...state.nodeDataArray, newNode]
@@ -255,6 +251,147 @@ const DiagramWrapper = () => {
 
             return nextState;
         });
+
+        if (changes?.primaryKey !== undefined) {
+            handlePrimaryKeyChange(key, changes.primaryKey);
+        }
+    }
+
+    const handlePrimaryKeyChange = (parentKey, attributeKey) => {
+        const parentIdx = mapNodeKeyIdx.current.get(parentKey);
+        const parentNode = state.nodeDataArray[parentIdx];
+
+        console.log(attributeKey);
+
+        if (parentNode.primaryKey.includes(attributeKey)) {
+            const deletedNodes = []
+            const updatedLinks = []
+
+            if (parentNode.primaryKey?.length > 1) {
+                const label = getPKLabel(attributeKey)[0];
+                deletedNodes.push(label.key)
+                updatedLinks.push(getEntityAttributeLink(parentKey, attributeKey)[1]);
+            }
+
+            parentNode.primaryKey = parentNode.primaryKey.filter(key => key !== attributeKey);
+
+            setState(prevState => {
+                const nextState = { ...prevState };
+                nextState.nodeDataArray[parentIdx].primaryKey = parentNode.primaryKey;
+
+                const idx = mapNodeKeyIdx.current.get(attributeKey);
+                nextState.nodeDataArray[idx].fill = "transparent";
+
+
+                if (nextState.nodeDataArray[parentIdx].primaryKey.length === 1) {
+                    const pk = nextState.nodeDataArray[parentIdx].primaryKey[0];
+                    deletedNodes.push(getPKLabel(pk)[0].key);
+                    updatedLinks.push(getEntityAttributeLink(parentKey, pk)[1]);
+                    nextState.nodeDataArray[parentIdx].primaryKeyLink = null;
+                    nextState.linkDataArray = nextState.linkDataArray.filter(link => !(link.category === "multiNodeLink" && link.entity === parentKey));
+                }
+
+                nextState.nodeDataArray = nextState.nodeDataArray.filter(nd => !deletedNodes.includes(nd.key));
+
+                updatedLinks.forEach(idx => {
+                    nextState.linkDataArray[idx].labelKeys = [];
+                })
+
+                refreshNodeIndex(nextState.nodeDataArray);
+                refreshLinkIndex(nextState.linkDataArray);
+                nextState.skipsDiagramUpdate = false;
+
+                nextState.nodeDataArray[parentIdx].primaryKey?.forEach(k => {
+                    const idx = mapNodeKeyIdx.current.get(k);
+                    if (nextState.nodeDataArray[parentIdx].primaryKey.length === 1) {
+                        nextState.nodeDataArray[idx].fill = "lightblue";
+                    } else {
+                        nextState.nodeDataArray[idx].fill = "transparent";
+                    }
+                })
+
+                return nextState;
+            });
+        } else {
+            parentNode.primaryKey.push(attributeKey);
+
+            setState(prevState => {
+                const nextState = { ...prevState };
+                nextState.nodeDataArray[parentIdx].primaryKey = parentNode.primaryKey;
+
+                if (nextState.nodeDataArray[parentIdx].primaryKey.length >= 2) {
+                    nextState.nodeDataArray[parentIdx].primaryKey.forEach(pk => {
+                        if (getPKLabel(pk) === null) {
+                            const label = {
+                                key: generateUUID(),
+                                category: "primaryKeyLabel",
+                                connecting: pk
+                            }
+
+                            const [link, linkIdx] = getEntityAttributeLink(parentKey, pk);
+                            link.labelKeys.push(label.key);
+
+                            if (parentNode.primaryKeyLink == null) {
+                                const multiLink = {
+                                    path: [label.key],
+                                    category: "multiNodeLink",
+                                    entity: parentKey,
+                                    key: generateUUID()
+                                }
+                                nextState.linkDataArray.push(multiLink);
+                                nextState.nodeDataArray[parentIdx].primaryKeyLink = multiLink.key;
+                            } else {
+                                const multiIdx = mapLinkKeyIdx.current.get(nextState.nodeDataArray[parentIdx].primaryKeyLink);
+                                const multiLink = nextState.linkDataArray[multiIdx];
+                                multiLink.path = [...multiLink.path, label.key];
+                                nextState.linkDataArray[multiIdx] = multiLink;
+                                nextState.linkDataArray = [ ...nextState.linkDataArray ]
+                            }
+
+                            nextState.nodeDataArray.push(label);
+                            nextState.linkDataArray[linkIdx] = link;
+                            nextState.skipsDiagramUpdate = false;
+
+                            refreshNodeIndex(nextState.nodeDataArray);
+                            refreshLinkIndex(nextState.linkDataArray);
+                        }
+                    })
+                }
+
+                nextState.nodeDataArray[parentIdx].primaryKey?.forEach(k => {
+                    const idx = mapNodeKeyIdx.current.get(k);
+                    if (nextState.nodeDataArray[parentIdx].primaryKey.length === 1) {
+                        nextState.nodeDataArray[idx].fill = "lightblue" ;
+                    } else {
+                        nextState.nodeDataArray[idx].fill = "transparent";
+                    }
+                })
+
+                nextState.nodeDataArray = [ ...nextState.nodeDataArray ]
+                nextState.skipsDiagramUpdate = false;
+
+                return nextState;
+            });
+        }
+    }
+
+    const getPKLabel = pk => {
+        let i=0;
+        for (i;i<state.nodeDataArray.length;i++) {
+            if (state.nodeDataArray[i].connecting === pk) {
+                return [state.nodeDataArray[i], i];
+            }
+        }
+
+        return null;
+    }
+
+    const getEntityAttributeLink = (parentKey, attributeKey) => {
+        for (let i = 0; i < state.linkDataArray.length; i++) {
+            if (state.linkDataArray[i].from === parentKey && state.linkDataArray[i].to === attributeKey) {
+                return [state.linkDataArray[i], i]
+            }
+        }
     }
 
     const collateData = selected => {
@@ -321,6 +458,7 @@ const DiagramWrapper = () => {
                     handleAddAttribute={handleAddAttribute}
                     handleDeleteAttribute={handleDeleteAttribute}
                     handlePropertyChange={handlePropertyChange}
+                    handlePrimaryKeyChange={handlePrimaryKeyChange}
                 />
             </div>
             : null }

@@ -93,7 +93,7 @@ const Editor = (props) => {
                                 icon={<CircleOutlined sx={{ color: inActiveColor }}/>}
                                 checkedIcon={<Circle color="secondary"/>}
                                 checked={props.data.primaryKey?.includes(key)}
-                                onClick={() => changePrimaryKey(key)}
+                                onClick={() => props.handlePrimaryKeyChange(props.data.key, key)}
                             />
                         </ListItem>
                     })

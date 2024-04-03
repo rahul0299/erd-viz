@@ -13,7 +13,8 @@ class CustomModel extends go.GraphLinksModel {
         super({
             linkKeyProperty: 'key',
             copiesKey: false,
-            makeUniqueKeyFunction: generateCustomKey
+            makeUniqueKeyFunction: generateCustomKey,
+            linkLabelKeysProperty: "labelKeys",
         });
     }
 }
