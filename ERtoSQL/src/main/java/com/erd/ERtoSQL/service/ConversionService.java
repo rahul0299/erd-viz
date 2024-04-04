@@ -351,6 +351,7 @@ public class ConversionService {
             }
 
             sql+= ");";
+            sql = sql.replaceAll(" number"," integer");
             sqlStatements.add(sql);
         }
     }
