@@ -1,4 +1,4 @@
-import './App.css'
+import "./App.css";
 import Palette from "./components/Palette/Palette.jsx";
 import DiagramWrapper from "./components/DiagramWrapper.jsx";
 
@@ -11,4 +11,4 @@ function App() {
   </div>
 }
 
-export default App
+export default App;

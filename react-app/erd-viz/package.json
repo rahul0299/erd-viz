@@ -23,9 +23,12 @@
     "file-saver": "^2.0.5",
     "gojs": "^2.3.16",
     "gojs-react": "^1.1.2",
+    "jsontoxml": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-json-pretty": "^2.2.0"
+    "react-icons": "^5.0.1",
+    "react-json-pretty": "^2.2.0",
+    "react-xml-viewer": "^2.0.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

@@ -1,26 +1,86 @@
 .diagram-component {
-    width: 100%;
-    height: 100%;
-    /*border: solid 1px black;*/
-    background-color: white;
-    position: relative;
-    z-index: 0;
+  width: 100%;
+  height: 100%;
+  /*border: solid 1px black;*/
+  background-color: white;
+  position: relative;
+  z-index: 0;
+  /* flex: 70%; */
 }
 
 .json-viewer {
-    width: 420px;
-    height: 200px;
-    overflow: scroll;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 2;
-    box-sizing: border-box;
-    border: 1px solid grey;
-    border-radius: 5px;
-    padding: 5px;
+  width: 420px;
+  height: 200px;
+  overflow: scroll;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  box-sizing: border-box;
+  border: 1px solid grey;
+  border-radius: 5px;
+  padding: 5px;
+  /* flex: 30%; */
 }
 
 .json-viewer-expanded {
-    height: 650px;
+  height: 650px;
+}
+
+.toggle-switch-tabs {
+  /* Add any additional styling for the container if needed */
+}
+
+.tabs {
+  display: flex; /* Use flexbox to arrange tabs in a row */
+}
+
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-bottom: none; /* Remove bottom border to make tabs appear connected */
+}
+
+.tab:last-child {
+  border-bottom: 1px solid #ccc; /* Add bottom border to the last tab to complete the appearance */
+}
+
+.tab.active {
+  background-color: #dad6d6; /* Styling for active tab */
+}
+
+.tab-content {
+  padding: 20px;
+}
+
+.copy-icon {
+  position: sticky;
+  bottom: 0;
+  right: 0;
+  margin: 10px; /* Adjust margin as needed */
+  cursor: pointer;
+  z-index: 999;
+}
+
+.copy-success-text {
+  font-size: small;
+  align-content: center;
+}
+
+.custom-button {
+  position: absolute;
+  z-index: 1;
+  padding: 10px 20px;
+  background-color: #bfc2c5;
+  color: rgb(16, 15, 15);
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.custom-button:hover {
+  background-color: #0056b3;
 }
