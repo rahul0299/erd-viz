@@ -59,7 +59,8 @@ public class ConversionService {
         linksMap = new HashMap<>();
         for (int i = 0; i < linksArray.length(); i++) {
 
-            if (attributesMap.get(linksArray.getJSONObject(i).get("from").toString()) != null ||
+            if (linksArray.getJSONObject(i).has("path") ||
+                    attributesMap.get(linksArray.getJSONObject(i).get("from").toString()) != null ||
                     attributesMap.get(linksArray.getJSONObject(i).get("to").toString()) != null) {
                 continue;
             }
