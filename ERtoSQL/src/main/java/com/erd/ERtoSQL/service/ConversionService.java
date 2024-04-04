@@ -84,6 +84,7 @@ public class ConversionService {
         relationInfo = new HashMap<>();
         tablesCreated=new HashMap<>();
         sqlStatements=new ArrayList<>();
+        sqlSet = new LinkedHashSet<>();
         for (int i = 0; i < nodes.length(); i++) {
             if ("entity".equalsIgnoreCase(nodes.getJSONObject(i).get("category").toString())) {
 
