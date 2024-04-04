@@ -13,9 +13,9 @@ public class Table {
     List<String> attributes;
     List<String> primaryKey;
     //Attribute,Entity
-    List<MutablePair<String, String>> foreignKeys;
+    List<MutablePair<List<String>, String>> foreignKeys;
 
-    public Table(String name, List<String> attributes, List<String> primaryKey, List<MutablePair<String, String >> foreignKeys) {
+    public Table(String name, List<String> attributes, List<String> primaryKey, List<MutablePair<List<String>, String >> foreignKeys) {
         this.name = name;
         this.attributes = attributes;
         this.primaryKey = primaryKey;

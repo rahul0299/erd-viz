@@ -14,7 +14,7 @@ public class Entity extends Node {
     String mergeWith;
 
 
-    public Entity(String name, String primaryKey, List<Object> attributes) {
+    public Entity(String name, List<Object> primaryKey, List<Object> attributes) {
         super(name, primaryKey, attributes);
 
     }

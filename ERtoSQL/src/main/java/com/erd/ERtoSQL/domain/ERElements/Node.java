@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public abstract class Node {
     List<String> attributes;
 
-    String primaryKey;
+    List<String> primaryKey;
 
     String name;
 
@@ -19,9 +19,12 @@ public abstract class Node {
     // Lets you know if it has already been merged with some table created and the reference of that table
     String tableCreated;
 
-    public Node(String name, String primaryKey, List<Object> attributes) {
+    public Node(String name, List<Object> primaryKey, List<Object> attributes) {
         this.name = name;
-        this.primaryKey = primaryKey;
+
+        if(primaryKey!=null){
+            this.primaryKey = primaryKey.stream().map(Object::toString).collect(Collectors.toList());
+        }
         this.attributes = attributes.stream().map(Object::toString).collect(Collectors.toList());
         links = new ArrayList<>();
     }

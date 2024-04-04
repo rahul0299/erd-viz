@@ -7,10 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class ConversionService {
@@ -28,15 +25,18 @@ public class ConversionService {
 
     List<String> sqlStatements = new ArrayList<>();
 
+    Set<String> sqlSet = new LinkedHashSet<>();
+
     private final String mergeWith = "MergeWith";
     private final String mergeWithWeak = "MergeWithWeak";
     private final String primaryKeyException = "PrimaryKeyException";
     private final String attachedToEntities = "AttachedToEntities";
 
     private final String notSpecialCase = "NotSpecialCase";
+    private final String notMerging = "notMerging";
 
 
-    public List<String> handleErToSQL(String erData) {
+    public Set<String> handleErToSQL(String erData) {
         JSONObject jsonObject = new JSONObject(erData);
 
         constructNodeMap(jsonObject.getJSONArray("nodeDataArray"));
@@ -49,7 +49,9 @@ public class ConversionService {
 
         generateSQL();
 
-        return sqlStatements;
+        reorderSql();
+
+        return sqlSet;
     }
 
     //Construct map of the keys of the elements and their direct links
@@ -57,7 +59,8 @@ public class ConversionService {
         linksMap = new HashMap<>();
         for (int i = 0; i < linksArray.length(); i++) {
 
-            if (attributesMap.get(linksArray.getJSONObject(i).get("from").toString()) != null ||
+            if (linksArray.getJSONObject(i).has("path") ||
+                    attributesMap.get(linksArray.getJSONObject(i).get("from").toString()) != null ||
                     attributesMap.get(linksArray.getJSONObject(i).get("to").toString()) != null) {
                 continue;
             }
@@ -81,19 +84,20 @@ public class ConversionService {
         relationInfo = new HashMap<>();
         tablesCreated=new HashMap<>();
         sqlStatements=new ArrayList<>();
+        sqlSet = new LinkedHashSet<>();
         for (int i = 0; i < nodes.length(); i++) {
             if ("entity".equalsIgnoreCase(nodes.getJSONObject(i).get("category").toString())) {
 
                 entityMap.put(nodes.getJSONObject(i).get("key").toString(),
                         new Entity(nodes.getJSONObject(i).get("name").toString(),
-                                nodes.getJSONObject(i).has("primaryKey") ? nodes.getJSONObject(i).get("primaryKey").toString() : null,
+                                nodes.getJSONObject(i).has("primaryKey") ? nodes.getJSONObject(i).getJSONArray("primaryKey").toList() : null,
                                 nodes.getJSONObject(i).getJSONArray("attributes").toList()));
 
             } else if ("relation".equalsIgnoreCase(nodes.getJSONObject(i).get("category").toString())) {
 
                 relationMap.put(nodes.getJSONObject(i).get("key").toString(),
                         new Relation(nodes.getJSONObject(i).get("name").toString(),
-                                nodes.getJSONObject(i).has("primaryKey") ? nodes.getJSONObject(i).get("primaryKey").toString() : null,
+                                nodes.getJSONObject(i).has("primaryKey") ? nodes.getJSONObject(i).getJSONArray("primaryKey").toList() : null,
                                 nodes.getJSONObject(i).getJSONArray("attributes").toList()));
 
             } else if ("attribute".equalsIgnoreCase(nodes.getJSONObject(i).get("category").toString())) {
@@ -123,6 +127,7 @@ public class ConversionService {
             relationInfo.get(relation).put(primaryKeyException, new ArrayList<>());
             relationInfo.get(relation).put(attachedToEntities, new ArrayList<>());
             relationInfo.get(relation).put(notSpecialCase, new ArrayList<>());
+            relationInfo.get(relation).put(notMerging, new ArrayList<>());
 
 
             for (MutablePair<String, Link> pair : linksMap.get(relation)) {
@@ -145,6 +150,7 @@ public class ConversionService {
                     relationInfo.get(relation).get(primaryKeyException).add(pair.getLeft());
                 } else {
                     relationInfo.get(relation).get(notSpecialCase).add(pair.getLeft());
+
                 }
             }
         }
@@ -160,7 +166,7 @@ public class ConversionService {
             Entity currentEntity = entityMap.get(entityKey);
             //create table
             tablesCreated.put(entityKey, new Table(currentEntity.getName(), currentEntity.getAttributes()
-                    , Arrays.asList(currentEntity.getPrimaryKey()), null));
+                    , currentEntity.getPrimaryKey(), null));
 
             currentEntity.setTableCreated(entityKey);
         }
@@ -178,11 +184,11 @@ public class ConversionService {
                 List<String> attributes = new ArrayList<>(currentRelation.getAttributes());
                 List<String> primaryKey = new ArrayList<>();
                 //Add key of table not in merge relation but in attached
-                List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
+                List<MutablePair<List<String>, String>> foreignKeys = new ArrayList<>();
 
                 for (String entityKey : relationInfo.get(relationKey).get(notSpecialCase)) {
                     foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(), entityKey));
-                    attributes.add(entityMap.get(entityKey).getPrimaryKey());
+                    attributes.addAll(entityMap.get(entityKey).getPrimaryKey());
                 }
 
                 //R table ready
@@ -197,7 +203,7 @@ public class ConversionService {
                         Entity currentEntity = entityMap.get(entityKey);
                         name = currentEntity.getName() + "_" + name;
                         attributes.addAll(currentEntity.getAttributes());
-                        primaryKey.add(currentEntity.getPrimaryKey());
+                        primaryKey.addAll(currentEntity.getPrimaryKey());
 
                     }
                 }
@@ -236,9 +242,10 @@ public class ConversionService {
                 Table currentTable = tablesCreated.get(currentRelation.getTableCreated());
                 for(String i: relationInfo.get(relationKey).get(primaryKeyException)){
                     Entity entity = entityMap.get(i);
-                    attributesMap.get(entity.getPrimaryKey()).setIsUnique(true);
-                    currentTable.getPrimaryKey().add(entity.getPrimaryKey());
-                    currentTable.getAttributes().add(entity.getPrimaryKey());
+                    entity.getPrimaryKey().forEach(t -> attributesMap.get(t).setIsUnique(true));
+                    currentTable.getPrimaryKey().addAll(entity.getPrimaryKey());
+                    currentTable.getAttributes().addAll(entity.getPrimaryKey());
+                    currentTable.getForeignKeys().add(new MutablePair<>(entity.getPrimaryKey(), i));
                 }
 
 
@@ -247,16 +254,16 @@ public class ConversionService {
                 String name = currentRelation.getName();
                 List<String> attributes = new ArrayList<>(currentRelation.getAttributes());
                 List<String> primaryKey = new ArrayList<>();
-                List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
+                List<MutablePair<List<String>, String>> foreignKeys = new ArrayList<>();
                 for(String attachedEntitiesReference : relationInfo.get(relationKey).get(attachedToEntities)){
                     if(relationInfo.get(relationKey).get(primaryKeyException).contains(attachedEntitiesReference)){
-                        attributesMap.get(entityMap.get(attachedEntitiesReference).getPrimaryKey()).setIsUnique(true);
-                        attributes.add(entityMap.get(attachedEntitiesReference).getPrimaryKey());
+                        entityMap.get(attachedEntitiesReference).getPrimaryKey().forEach(t -> attributesMap.get(t).setIsUnique(true));
+                        attributes.addAll(entityMap.get(attachedEntitiesReference).getPrimaryKey());
                     }
                     else{
-                        attributes.add(entityMap.get(attachedEntitiesReference).getPrimaryKey());
+                        attributes.addAll(entityMap.get(attachedEntitiesReference).getPrimaryKey());
                     }
-                    primaryKey.add(entityMap.get(attachedEntitiesReference).getPrimaryKey());
+                    primaryKey.addAll(entityMap.get(attachedEntitiesReference).getPrimaryKey());
                     foreignKeys.add(new MutablePair<>(entityMap.get(attachedEntitiesReference).getPrimaryKey(), attachedEntitiesReference));
                 }
 
@@ -278,12 +285,12 @@ public class ConversionService {
 
             List<String> attributes = new ArrayList<>(currentRelation.getAttributes());
             List<String> primaryKeys = new ArrayList<>();
-            List<MutablePair<String, String>> foreignKeys = new ArrayList<>();
+            List<MutablePair<List<String>, String>> foreignKeys = new ArrayList<>();
 
             for (String entityKey : relationInfo.get(relationKey).get(attachedToEntities)) {
                 foreignKeys.add(new MutablePair<>(entityMap.get(entityKey).getPrimaryKey(), entityKey));
-                primaryKeys.add(entityMap.get(entityKey).getPrimaryKey());
-                attributes.add(entityMap.get(entityKey).getPrimaryKey());
+                primaryKeys.addAll(entityMap.get(entityKey).getPrimaryKey());
+                attributes.addAll(entityMap.get(entityKey).getPrimaryKey());
             }
             tablesCreated.put(relationKey, new Table(currentRelation.getName(), attributes
                     , primaryKeys, foreignKeys));
@@ -323,12 +330,17 @@ public class ConversionService {
             }
 
             if(tablesCreated.get(tableReference).getForeignKeys()!=null && !tablesCreated.get(tableReference).getForeignKeys().isEmpty()){
-                String foreign="";
-                for(MutablePair<String, String> foreignKeyReference :
+                String foreignAttributes,foreign;
+                for(MutablePair<List<String>, String> foreignKeyReference :
                         tablesCreated.get(tableReference).getForeignKeys()){
-                    foreign="\nFOREIGN KEY ("+attributesMap.get(foreignKeyReference.getLeft()).getName()+") REFERENCES "+
+                    foreignAttributes="";foreign="";
+                    for(String primaryKeyReference : foreignKeyReference.getLeft()){
+                        foreignAttributes+=attributesMap.get(primaryKeyReference).getName()+" ,";
+                    }
+                    foreignAttributes = foreignAttributes.substring(0,foreignAttributes.length()-1);
+                    foreign="\nFOREIGN KEY ( "+foreignAttributes+") REFERENCES "+
                             tablesCreated.get(entityMap.get(foreignKeyReference.getRight()).getTableCreated()).getName()
-                            +" ("+attributesMap.get(foreignKeyReference.getLeft()).getName()+"),";
+                            +" ("+foreignAttributes+"),";
                     sql+=foreign;
                 }
                 sql = sql.substring(0,sql.length()-1);
@@ -341,6 +353,15 @@ public class ConversionService {
             sql+= ");";
             sqlStatements.add(sql);
         }
+    }
+
+    private void reorderSql(){
+        for(String i : sqlStatements){
+            if(!i.contains("FOREIGN KEY")){
+                sqlSet.add(i);
+            }
+        }
+        sqlSet.addAll(sqlStatements);
     }
 }
 
